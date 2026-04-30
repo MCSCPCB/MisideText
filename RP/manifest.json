@@ -1,0 +1,42 @@
+{
+  "format_version": 2,
+  "metadata": {
+    "product_type": "addon"
+  },
+  "header": {
+    "name": "Miside Subtitle Prototype RP",
+    "description": "Physical subtitle prototype with font-atlas entity rendering",
+    "uuid": "a97a943d-188f-4100-bfe6-4828e2743d71",
+    "version": [
+      0,
+      2,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      101
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "12f4faf0-f2ca-49e5-8fd9-034c77a2352f",
+      "version": [
+        0,
+        2,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "b4682f5f-8226-4217-9f6a-6de4cf56a267",
+      "version": [
+        0,
+        2,
+        0
+      ]
+    }
+  ]
+}

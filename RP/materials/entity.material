@@ -1,0 +1,33 @@
+{
+  "materials": {
+    "version": "1.0.0",
+    "miside_subtitle_depth_test_front:entity_alphablend": {
+      "+defines": [
+        "ALPHA_TEST"
+      ],
+      "-states": [
+        "DisableCulling"
+      ],
+      "+states": [
+        "EnableAlphaToCoverage"
+      ]
+    },
+    "miside_subtitle_depth_test_backface:miside_subtitle_depth_test_front": {
+      "+states": [
+        "DisableCulling"
+      ]
+    },
+    "miside_subtitle_depth_off_front:miside_subtitle_depth_test_front": {
+      "+states": [
+        "DisableDepthTest",
+        "DisableDepthWrite"
+      ]
+    },
+    "miside_subtitle_depth_off_backface:miside_subtitle_depth_test_backface": {
+      "+states": [
+        "DisableDepthTest",
+        "DisableDepthWrite"
+      ]
+    }
+  }
+}

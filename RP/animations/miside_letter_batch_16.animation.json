@@ -1,0 +1,509 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.miside_letter_batch_16.update": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "scale": 1
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_00": {
+      "loop": true,
+      "bones": {
+        "slot_00_translate": {
+          "position": [
+            "v.g0_pos_x",
+            "v.g0_pos_y",
+            "v.g0_pos_z"
+          ]
+        },
+        "slot_00_rotate": {
+          "rotation": [
+            "v.g0_rot_x",
+            "v.g0_rot_y",
+            "v.g0_rot_z"
+          ]
+        },
+        "slot_00_glyph": {
+          "position": [
+            "v.g0_off_x",
+            "v.g0_off_y",
+            "v.g0_off_z"
+          ],
+          "scale": [
+            "v.g0_scale_x",
+            "v.g0_scale_y",
+            "v.g0_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_01": {
+      "loop": true,
+      "bones": {
+        "slot_01_translate": {
+          "position": [
+            "v.g1_pos_x",
+            "v.g1_pos_y",
+            "v.g1_pos_z"
+          ]
+        },
+        "slot_01_rotate": {
+          "rotation": [
+            "v.g1_rot_x",
+            "v.g1_rot_y",
+            "v.g1_rot_z"
+          ]
+        },
+        "slot_01_glyph": {
+          "position": [
+            "v.g1_off_x",
+            "v.g1_off_y",
+            "v.g1_off_z"
+          ],
+          "scale": [
+            "v.g1_scale_x",
+            "v.g1_scale_y",
+            "v.g1_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_02": {
+      "loop": true,
+      "bones": {
+        "slot_02_translate": {
+          "position": [
+            "v.g2_pos_x",
+            "v.g2_pos_y",
+            "v.g2_pos_z"
+          ]
+        },
+        "slot_02_rotate": {
+          "rotation": [
+            "v.g2_rot_x",
+            "v.g2_rot_y",
+            "v.g2_rot_z"
+          ]
+        },
+        "slot_02_glyph": {
+          "position": [
+            "v.g2_off_x",
+            "v.g2_off_y",
+            "v.g2_off_z"
+          ],
+          "scale": [
+            "v.g2_scale_x",
+            "v.g2_scale_y",
+            "v.g2_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_03": {
+      "loop": true,
+      "bones": {
+        "slot_03_translate": {
+          "position": [
+            "v.g3_pos_x",
+            "v.g3_pos_y",
+            "v.g3_pos_z"
+          ]
+        },
+        "slot_03_rotate": {
+          "rotation": [
+            "v.g3_rot_x",
+            "v.g3_rot_y",
+            "v.g3_rot_z"
+          ]
+        },
+        "slot_03_glyph": {
+          "position": [
+            "v.g3_off_x",
+            "v.g3_off_y",
+            "v.g3_off_z"
+          ],
+          "scale": [
+            "v.g3_scale_x",
+            "v.g3_scale_y",
+            "v.g3_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_04": {
+      "loop": true,
+      "bones": {
+        "slot_04_translate": {
+          "position": [
+            "v.g4_pos_x",
+            "v.g4_pos_y",
+            "v.g4_pos_z"
+          ]
+        },
+        "slot_04_rotate": {
+          "rotation": [
+            "v.g4_rot_x",
+            "v.g4_rot_y",
+            "v.g4_rot_z"
+          ]
+        },
+        "slot_04_glyph": {
+          "position": [
+            "v.g4_off_x",
+            "v.g4_off_y",
+            "v.g4_off_z"
+          ],
+          "scale": [
+            "v.g4_scale_x",
+            "v.g4_scale_y",
+            "v.g4_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_05": {
+      "loop": true,
+      "bones": {
+        "slot_05_translate": {
+          "position": [
+            "v.g5_pos_x",
+            "v.g5_pos_y",
+            "v.g5_pos_z"
+          ]
+        },
+        "slot_05_rotate": {
+          "rotation": [
+            "v.g5_rot_x",
+            "v.g5_rot_y",
+            "v.g5_rot_z"
+          ]
+        },
+        "slot_05_glyph": {
+          "position": [
+            "v.g5_off_x",
+            "v.g5_off_y",
+            "v.g5_off_z"
+          ],
+          "scale": [
+            "v.g5_scale_x",
+            "v.g5_scale_y",
+            "v.g5_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_06": {
+      "loop": true,
+      "bones": {
+        "slot_06_translate": {
+          "position": [
+            "v.g6_pos_x",
+            "v.g6_pos_y",
+            "v.g6_pos_z"
+          ]
+        },
+        "slot_06_rotate": {
+          "rotation": [
+            "v.g6_rot_x",
+            "v.g6_rot_y",
+            "v.g6_rot_z"
+          ]
+        },
+        "slot_06_glyph": {
+          "position": [
+            "v.g6_off_x",
+            "v.g6_off_y",
+            "v.g6_off_z"
+          ],
+          "scale": [
+            "v.g6_scale_x",
+            "v.g6_scale_y",
+            "v.g6_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_07": {
+      "loop": true,
+      "bones": {
+        "slot_07_translate": {
+          "position": [
+            "v.g7_pos_x",
+            "v.g7_pos_y",
+            "v.g7_pos_z"
+          ]
+        },
+        "slot_07_rotate": {
+          "rotation": [
+            "v.g7_rot_x",
+            "v.g7_rot_y",
+            "v.g7_rot_z"
+          ]
+        },
+        "slot_07_glyph": {
+          "position": [
+            "v.g7_off_x",
+            "v.g7_off_y",
+            "v.g7_off_z"
+          ],
+          "scale": [
+            "v.g7_scale_x",
+            "v.g7_scale_y",
+            "v.g7_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_08": {
+      "loop": true,
+      "bones": {
+        "slot_08_translate": {
+          "position": [
+            "v.g8_pos_x",
+            "v.g8_pos_y",
+            "v.g8_pos_z"
+          ]
+        },
+        "slot_08_rotate": {
+          "rotation": [
+            "v.g8_rot_x",
+            "v.g8_rot_y",
+            "v.g8_rot_z"
+          ]
+        },
+        "slot_08_glyph": {
+          "position": [
+            "v.g8_off_x",
+            "v.g8_off_y",
+            "v.g8_off_z"
+          ],
+          "scale": [
+            "v.g8_scale_x",
+            "v.g8_scale_y",
+            "v.g8_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_09": {
+      "loop": true,
+      "bones": {
+        "slot_09_translate": {
+          "position": [
+            "v.g9_pos_x",
+            "v.g9_pos_y",
+            "v.g9_pos_z"
+          ]
+        },
+        "slot_09_rotate": {
+          "rotation": [
+            "v.g9_rot_x",
+            "v.g9_rot_y",
+            "v.g9_rot_z"
+          ]
+        },
+        "slot_09_glyph": {
+          "position": [
+            "v.g9_off_x",
+            "v.g9_off_y",
+            "v.g9_off_z"
+          ],
+          "scale": [
+            "v.g9_scale_x",
+            "v.g9_scale_y",
+            "v.g9_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_10": {
+      "loop": true,
+      "bones": {
+        "slot_10_translate": {
+          "position": [
+            "v.g10_pos_x",
+            "v.g10_pos_y",
+            "v.g10_pos_z"
+          ]
+        },
+        "slot_10_rotate": {
+          "rotation": [
+            "v.g10_rot_x",
+            "v.g10_rot_y",
+            "v.g10_rot_z"
+          ]
+        },
+        "slot_10_glyph": {
+          "position": [
+            "v.g10_off_x",
+            "v.g10_off_y",
+            "v.g10_off_z"
+          ],
+          "scale": [
+            "v.g10_scale_x",
+            "v.g10_scale_y",
+            "v.g10_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_11": {
+      "loop": true,
+      "bones": {
+        "slot_11_translate": {
+          "position": [
+            "v.g11_pos_x",
+            "v.g11_pos_y",
+            "v.g11_pos_z"
+          ]
+        },
+        "slot_11_rotate": {
+          "rotation": [
+            "v.g11_rot_x",
+            "v.g11_rot_y",
+            "v.g11_rot_z"
+          ]
+        },
+        "slot_11_glyph": {
+          "position": [
+            "v.g11_off_x",
+            "v.g11_off_y",
+            "v.g11_off_z"
+          ],
+          "scale": [
+            "v.g11_scale_x",
+            "v.g11_scale_y",
+            "v.g11_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_12": {
+      "loop": true,
+      "bones": {
+        "slot_12_translate": {
+          "position": [
+            "v.g12_pos_x",
+            "v.g12_pos_y",
+            "v.g12_pos_z"
+          ]
+        },
+        "slot_12_rotate": {
+          "rotation": [
+            "v.g12_rot_x",
+            "v.g12_rot_y",
+            "v.g12_rot_z"
+          ]
+        },
+        "slot_12_glyph": {
+          "position": [
+            "v.g12_off_x",
+            "v.g12_off_y",
+            "v.g12_off_z"
+          ],
+          "scale": [
+            "v.g12_scale_x",
+            "v.g12_scale_y",
+            "v.g12_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_13": {
+      "loop": true,
+      "bones": {
+        "slot_13_translate": {
+          "position": [
+            "v.g13_pos_x",
+            "v.g13_pos_y",
+            "v.g13_pos_z"
+          ]
+        },
+        "slot_13_rotate": {
+          "rotation": [
+            "v.g13_rot_x",
+            "v.g13_rot_y",
+            "v.g13_rot_z"
+          ]
+        },
+        "slot_13_glyph": {
+          "position": [
+            "v.g13_off_x",
+            "v.g13_off_y",
+            "v.g13_off_z"
+          ],
+          "scale": [
+            "v.g13_scale_x",
+            "v.g13_scale_y",
+            "v.g13_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_14": {
+      "loop": true,
+      "bones": {
+        "slot_14_translate": {
+          "position": [
+            "v.g14_pos_x",
+            "v.g14_pos_y",
+            "v.g14_pos_z"
+          ]
+        },
+        "slot_14_rotate": {
+          "rotation": [
+            "v.g14_rot_x",
+            "v.g14_rot_y",
+            "v.g14_rot_z"
+          ]
+        },
+        "slot_14_glyph": {
+          "position": [
+            "v.g14_off_x",
+            "v.g14_off_y",
+            "v.g14_off_z"
+          ],
+          "scale": [
+            "v.g14_scale_x",
+            "v.g14_scale_y",
+            "v.g14_scale_z"
+          ]
+        }
+      }
+    },
+    "animation.miside_letter_batch_16.slot_15": {
+      "loop": true,
+      "bones": {
+        "slot_15_translate": {
+          "position": [
+            "v.g15_pos_x",
+            "v.g15_pos_y",
+            "v.g15_pos_z"
+          ]
+        },
+        "slot_15_rotate": {
+          "rotation": [
+            "v.g15_rot_x",
+            "v.g15_rot_y",
+            "v.g15_rot_z"
+          ]
+        },
+        "slot_15_glyph": {
+          "position": [
+            "v.g15_off_x",
+            "v.g15_off_y",
+            "v.g15_off_z"
+          ],
+          "scale": [
+            "v.g15_scale_x",
+            "v.g15_scale_y",
+            "v.g15_scale_z"
+          ]
+        }
+      }
+    }
+  }
+}
