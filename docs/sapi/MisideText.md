@@ -74,6 +74,8 @@ Creates a subtitle group at a world position, or by using the single-object over
 | `options.dimension` | `Dimension` | Required unless `options.attachedTo` already provides a dimension. |
 | `options.rotation` | `{ x: number, y: number, z: number }` | Subtitle-group rotation, where `x = pitch`, `y = yaw`, and `z = roll`. |
 | `options.scale` | `number` | Overall subtitle scale. Values less than or equal to `0` fall back to `1`. |
+| `options.letterSpacing` | `number` | Horizontal spacing between characters. Default: `0.736`. |
+| `options.lineSpacing` | `number` | Vertical spacing between lines. Default: `0.552`. |
 | `options.useRotation` | `boolean` | Whether the hover stage uses the supplied rotation value. Set it to `false` to enable player-camera-facing rotation. Default: `true`. |
 | `options.depthTest` | `boolean` | Whether the subtitle participates in depth testing. Set it to `false` to make the subtitle render through the world. Default: `true`. |
 | `options.backfaceVisible` | `boolean` | Whether the back side of the subtitle plane is visible. Set it to `false` to make the subtitle visible only from the front. Default: `true`. |
@@ -102,6 +104,8 @@ const text = new MisideText(
     dimension: player.dimension,
     rotation: { x: 0, y: 45, z: 0 },
     scale: 1,
+    letterSpacing: 0.8,
+    lineSpacing: 0.6,
     depthTest: true,
     backfaceVisible: true,
     glow: false,
@@ -131,6 +135,8 @@ Creates a player-facing subtitle.
 | `options.location` | `{ x: number, y: number, z: number }` | Optional explicit anchor position. |
 | `options.rotation` | `{ x: number, y: number, z: number }` | Optional subtitle-group rotation override, where `x = pitch`, `y = yaw`, and `z = roll`. |
 | `options.scale` | `number` | Optional subtitle scale. Values less than or equal to `0` fall back to `1`. |
+| `options.letterSpacing` | `number` | Optional horizontal spacing between characters. Default: `0.736`. |
+| `options.lineSpacing` | `number` | Optional vertical spacing between lines. Default: `0.552`. |
 | `options.useRotation` | `boolean` | Whether the hover stage uses the supplied rotation value. Default: `true`. |
 | `options.depthTest` | `boolean` | Whether the subtitle participates in depth testing. Default: `true`. |
 | `options.backfaceVisible` | `boolean` | Whether the back side of the subtitle plane is visible. Default: `true`. |
@@ -162,6 +168,8 @@ const text = MisideText.setSubtitle(player, {
 }, {
   distance: 2.4,
   drop: 0.35,
+  letterSpacing: 0.8,
+  lineSpacing: 0.6,
   depthTest: true,
   backfaceVisible: true,
   glow: false,
@@ -181,6 +189,8 @@ const text = MisideText.setSubtitle(player, {
 | `dimension` | `Dimension` | Read only | Current resolved runtime dimension. |
 | `rotation` | `{ x: number, y: number, z: number }` | Read / write | Subtitle-group rotation, where `x = pitch`, `y = yaw`, and `z = roll`. |
 | `scale` | `number` | Read / write | Overall subtitle scale. |
+| `letterSpacing` | `number` | Read / write | Horizontal spacing between characters. |
+| `lineSpacing` | `number` | Read / write | Vertical spacing between lines. |
 | `useRotation` | `boolean` | Read / write | Whether the hover stage uses the supplied rotation value. |
 | `depthTest` | `boolean` | Read / write | Whether the subtitle participates in depth testing. |
 | `backfaceVisible` | `boolean` | Read / write | Whether the back side of the subtitle plane is visible. |
@@ -238,6 +248,26 @@ Returns: `MisideText`
 
 ```js
 text.setScale(1.25);
+```
+
+#### `setLetterSpacing(letterSpacing)`
+
+Sets the horizontal spacing between characters.
+
+Returns: `MisideText`
+
+```js
+text.setLetterSpacing(0.8);
+```
+
+#### `setLineSpacing(lineSpacing)`
+
+Sets the vertical spacing between lines.
+
+Returns: `MisideText`
+
+```js
+text.setLineSpacing(0.6);
 ```
 
 #### `setUseRotation(useRotation)`

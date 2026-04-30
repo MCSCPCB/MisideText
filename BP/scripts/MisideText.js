@@ -169,6 +169,8 @@ export class MisideText {
     this._rotation = normalizeRotation(config.rotation);
     this._basisDirection = normalizeOptionalDirection(config.basisDirection);
     this._scale = normalizeScale(config.scale);
+    this._letterSpacing = normalizeNonNegativeNumber(config.letterSpacing, GLYPH_ADVANCE);
+    this._lineSpacing = normalizeNonNegativeNumber(config.lineSpacing, SHARD_LINE_SPACING);
     this._useRotation = normalizeUseRotation(config.useRotation);
     this._depthTest = normalizeDepthTest(config.depthTest);
     this._backfaceVisible = normalizeBackfaceVisible(config.backfaceVisible);
@@ -253,6 +255,22 @@ export class MisideText {
 
   set scale(value) {
     this.setScale(value);
+  }
+
+  get letterSpacing() {
+    return this._letterSpacing;
+  }
+
+  set letterSpacing(value) {
+    this.setLetterSpacing(value);
+  }
+
+  get lineSpacing() {
+    return this._lineSpacing;
+  }
+
+  set lineSpacing(value) {
+    this.setLineSpacing(value);
   }
 
   get useRotation() {
@@ -403,6 +421,36 @@ export class MisideText {
     }
 
     this._scale = normalizeScale(scale);
+    return this;
+  }
+
+  setLetterSpacing(letterSpacing) {
+    if (!this._valid) {
+      return this;
+    }
+
+    const nextLetterSpacing = normalizeNonNegativeNumber(letterSpacing, GLYPH_ADVANCE);
+    if (this._letterSpacing === nextLetterSpacing) {
+      return this;
+    }
+
+    this._letterSpacing = nextLetterSpacing;
+    this._respawn();
+    return this;
+  }
+
+  setLineSpacing(lineSpacing) {
+    if (!this._valid) {
+      return this;
+    }
+
+    const nextLineSpacing = normalizeNonNegativeNumber(lineSpacing, SHARD_LINE_SPACING);
+    if (this._lineSpacing === nextLineSpacing) {
+      return this;
+    }
+
+    this._lineSpacing = nextLineSpacing;
+    this._respawn();
     return this;
   }
 
@@ -584,7 +632,11 @@ export class MisideText {
     this._playerlessCullConfirmTick = Number.POSITIVE_INFINITY;
     this._pendingSweepRemoval = false;
 
-    const { descriptors, totalSlots } = buildLetterDescriptors(this._text);
+    const { descriptors, totalSlots } = buildLetterDescriptors(
+      this._text,
+      this._letterSpacing,
+      this._lineSpacing
+    );
     if (!descriptors.length || totalSlots === 0) {
       return false;
     }
@@ -1521,6 +1573,8 @@ function isConstructorOptionsObject(value) {
     "renderer" in value ||
     "basisDirection" in value ||
     "attachedTo" in value ||
+    "letterSpacing" in value ||
+    "lineSpacing" in value ||
     "useRotation" in value ||
     "depthTest" in value ||
     "backfaceVisible" in value ||
@@ -1533,14 +1587,18 @@ function isConstructorOptionsObject(value) {
     "scale" in value;
 }
 
-function buildLetterDescriptors(text) {
+function buildLetterDescriptors(
+  text,
+  letterSpacing = GLYPH_ADVANCE,
+  lineSpacing = SHARD_LINE_SPACING
+) {
   const lines = buildStyledSubtitleLines(text);
   const descriptors = [];
   let slotIndex = 0;
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
     const chars = lines[lineIndex];
-    const lineOffset = getLineOffset(lineIndex, lines.length);
+    const lineOffset = getLineOffset(lineIndex, lines.length, lineSpacing);
 
     for (let charIndex = 0; charIndex < chars.length; charIndex += 1) {
       const descriptor = chars[charIndex];
@@ -1549,7 +1607,7 @@ function buildLetterDescriptors(text) {
         page: glyph.page,
         cell: glyph.cell,
         sequenceIndex: slotIndex,
-        centeredOffset: getCenteredOffset(charIndex, chars.length),
+        centeredOffset: getCenteredOffset(charIndex, chars.length, letterSpacing),
         lineOffset,
         red: descriptor.color.red,
         green: descriptor.color.green,
@@ -2065,13 +2123,13 @@ function glyphFromCodePoint(codePoint) {
   };
 }
 
-function getCenteredOffset(index, totalChars) {
-  return (((totalChars - 1) * 0.5) - index) * GLYPH_ADVANCE;
+function getCenteredOffset(index, totalChars, letterSpacing = GLYPH_ADVANCE) {
+  return (((totalChars - 1) * 0.5) - index) * letterSpacing;
 }
 
-function getLineOffset(lineIndex, totalLines) {
+function getLineOffset(lineIndex, totalLines, lineSpacing = SHARD_LINE_SPACING) {
   const centeredLine = lineIndex - ((totalLines - 1) * 0.5);
-  return -centeredLine * SHARD_LINE_SPACING;
+  return -centeredLine * lineSpacing;
 }
 
 function getMainDropStartTick(fadeInTicks, holdTicks) {
@@ -3260,6 +3318,11 @@ function normalizeNumber(value, fallback) {
 function normalizePositiveNumber(value, fallback) {
   const parsed = normalizeNumber(value, fallback);
   return parsed > 0 ? parsed : fallback;
+}
+
+function normalizeNonNegativeNumber(value, fallback) {
+  const parsed = normalizeNumber(value, fallback);
+  return parsed >= 0 ? parsed : fallback;
 }
 
 function secondsToTicks(seconds) {

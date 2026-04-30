@@ -74,6 +74,8 @@ const content = {
 | `options.dimension` | `Dimension` | 必填，除非 `options.attachedTo` 已经提供维度。 |
 | `options.rotation` | `{ x: number, y: number, z: number }` | 字幕组旋转，其中 `x = pitch`、`y = yaw`、`z = roll`。 |
 | `options.scale` | `number` | 整体字幕缩放。小于或等于 `0` 的值会回退到 `1`。 |
+| `options.letterSpacing` | `number` | 字与字之间的水平间距。默认值：`0.736`。 |
+| `options.lineSpacing` | `number` | 行与行之间的垂直间距。默认值：`0.552`。 |
 | `options.useRotation` | `boolean` | 字幕悬浮阶段是否使用传入的旋转值。设为 `false` 则启用面向玩家摄像机旋转。默认值：`true`。 |
 | `options.depthTest` | `boolean` | 字幕是否参与深度测试，设为 `false` 则字幕变得可透视。默认值：`true`。 |
 | `options.backfaceVisible` | `boolean` | 字幕平面的背面是否可见，设为 `false` 则字幕仅正面可见。默认值：`true`。 |
@@ -102,6 +104,8 @@ const text = new MisideText(
     dimension: player.dimension,
     rotation: { x: 0, y: 45, z: 0 },
     scale: 1,
+    letterSpacing: 0.8,
+    lineSpacing: 0.6,
     depthTest: true,
     backfaceVisible: true,
     glow: false,
@@ -131,6 +135,8 @@ const text = new MisideText(
 | `options.location` | `{ x: number, y: number, z: number }` | 可选的显式锚点位置。 |
 | `options.rotation` | `{ x: number, y: number, z: number }` | 可选的字幕组旋转覆盖，其中 `x = pitch`、`y = yaw`、`z = roll`。 |
 | `options.scale` | `number` | 可选的字幕缩放。小于或等于 `0` 的值会回退到 `1`。 |
+| `options.letterSpacing` | `number` | 可选的字与字之间水平间距。默认值：`0.736`。 |
+| `options.lineSpacing` | `number` | 可选的行与行之间垂直间距。默认值：`0.552`。 |
 | `options.useRotation` | `boolean` | 悬浮阶段是否使用传入旋转值。默认值：`true`。 |
 | `options.depthTest` | `boolean` | 字幕是否参与深度测试。默认值：`true`。 |
 | `options.backfaceVisible` | `boolean` | 字幕平面的背面是否可见。默认值：`true`。 |
@@ -162,6 +168,8 @@ const text = MisideText.setSubtitle(player, {
 }, {
   distance: 2.4,
   drop: 0.35,
+  letterSpacing: 0.8,
+  lineSpacing: 0.6,
   depthTest: true,
   backfaceVisible: true,
   glow: false,
@@ -181,6 +189,8 @@ const text = MisideText.setSubtitle(player, {
 | `dimension` | `Dimension` | 只读 | 当前解析后的运行时维度。 |
 | `rotation` | `{ x: number, y: number, z: number }` | 可读写 | 字幕组旋转，其中 `x = pitch`、`y = yaw`、`z = roll`。 |
 | `scale` | `number` | 可读写 | 整体字幕缩放。 |
+| `letterSpacing` | `number` | 可读写 | 字与字之间的水平间距。 |
+| `lineSpacing` | `number` | 可读写 | 行与行之间的垂直间距。 |
 | `useRotation` | `boolean` | 可读写 | 悬浮阶段是否使用传入旋转值。 |
 | `depthTest` | `boolean` | 可读写 | 字幕是否参与深度测试。 |
 | `backfaceVisible` | `boolean` | 可读写 | 字幕平面的背面是否可见。 |
@@ -238,6 +248,26 @@ text.setRotation({ x: -10, y: 35, z: 12 });
 
 ```js
 text.setScale(1.25);
+```
+
+#### `setLetterSpacing(letterSpacing)`
+
+设置字与字之间的水平间距
+
+返回值：`MisideText`
+
+```js
+text.setLetterSpacing(0.8);
+```
+
+#### `setLineSpacing(lineSpacing)`
+
+设置行与行之间的垂直间距
+
+返回值：`MisideText`
+
+```js
+text.setLineSpacing(0.6);
 ```
 
 #### `setUseRotation(useRotation)`
