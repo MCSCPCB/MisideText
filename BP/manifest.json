@@ -4,8 +4,8 @@
     "product_type": "addon"
   },
   "header": {
-    "name": "Miside Subtitle Prototype BP",
-    "description": "Physical subtitle prototype with font-atlas entity rendering",
+    "name": "Miside Subtitle BP",
+    "description": "Physical subtitle with font-atlas entity rendering",
     "uuid": "b4682f5f-8226-4217-9f6a-6de4cf56a267",
     "version": [
       0,

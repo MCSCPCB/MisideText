@@ -29,7 +29,7 @@ miside:text <text: string> [timings: string] [scale: float] [location: x y z] [p
 
 ## 示例
 
-使用执行者默认上下文生成字幕：
+面向执行者生成字幕：
 
 ```mcfunction
 /miside:text "你好啊"

@@ -29,7 +29,7 @@ miside:text <text: string> [timings: string] [scale: float] [location: x y z] [p
 
 ## Examples
 
-Spawn a subtitle using the executor's default context:
+Spawn a subtitle using the default context:
 
 ```mcfunction
 /miside:text "Hello"
