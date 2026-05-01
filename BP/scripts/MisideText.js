@@ -85,6 +85,32 @@ const SUBTITLE_OWNER_TAG_PREFIX = "ms_tx_";
 const SUBTITLE_BATCH_TAG_PREFIX = "ms_b_";
 const SUBTITLE_RUNTIME_SESSION_ID = createSubtitleRuntimeSessionId();
 const SUBTITLE_RUNTIME_TAG = `${SUBTITLE_RUNTIME_TAG_PREFIX}${SUBTITLE_RUNTIME_SESSION_ID}`;
+const LOCALIZATION_KEYS = Object.freeze({
+  command: Object.freeze({
+    description: "misidetext.command.description",
+    success: "misidetext.command.success",
+    failureContext: "misidetext.command.failure.context",
+    failureTimings: "misidetext.command.failure.timings",
+    failureRenderFlags: "misidetext.command.failure.render_flags",
+    failureNonNegative: "misidetext.command.failure.non_negative"
+  }),
+  parameter: Object.freeze({
+    timings: "misidetext.parameter.timings",
+    renderFlags: "misidetext.parameter.render_flags"
+  }),
+  error: Object.freeze({
+    dimensionRequired: "misidetext.error.dimension_required",
+    invalidPlayer: "misidetext.error.invalid_player",
+    visibleToArray: "misidetext.error.visible_to_array",
+    visibleToPlayerInstances: "misidetext.error.visible_to_player_instances",
+    textType: "misidetext.error.text_type",
+    contentSegmentsOnly: "misidetext.error.content_segments_only",
+    contentSegmentsArray: "misidetext.error.content_segments_array",
+    contentSegmentEntry: "misidetext.error.content_segment_entry",
+    colorObject: "misidetext.error.color_object",
+    colorChannelRange: "misidetext.error.color_channel_range"
+  })
+});
 const DEFAULT_TEXT_COLOR = Object.freeze({
   red: 255,
   green: 255,
@@ -188,7 +214,7 @@ export class MisideText {
     this._effect = createEmptyEffectState();
 
     if (!this._dimension) {
-      throw new Error("MisideText requires a dimension or an attached entity.");
+      throw createLocalizedError(LOCALIZATION_KEYS.error.dimensionRequired);
     }
 
     if (!this._spawn()) {
@@ -203,7 +229,7 @@ export class MisideText {
 
   static setSubtitle(player, text = DEFAULT_TEXT, options = {}) {
     if (!player?.isValid) {
-      throw new Error("MisideText.setSubtitle requires a valid player.");
+      throw createLocalizedError(LOCALIZATION_KEYS.error.invalidPlayer);
     }
 
     const distance = normalizePositiveNumber(options.distance, SUBTITLE_DISTANCE);
@@ -866,7 +892,7 @@ function installMisideTextCommand() {
 
     commandRegistry.registerCommand({
       name: "miside:text",
-      description: "Spawn a MisideText subtitle.",
+      description: LOCALIZATION_KEYS.command.description,
       permissionLevel: CommandPermissionLevel.Any,
       cheatsRequired: false,
       mandatoryParameters: [
@@ -1110,7 +1136,7 @@ function normalizeVisibleToPlayerIds(visibleTo) {
   }
 
   if (!Array.isArray(visibleTo)) {
-    throw new Error("MisideText.visibleTo must be a Player array.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.visibleToArray);
   }
 
   const uniquePlayerIds = [];
@@ -1119,7 +1145,7 @@ function normalizeVisibleToPlayerIds(visibleTo) {
     const playerId = typeof player?.id === "string" ? player.id : null;
     const isPlayerLike = typeof player?.setPropertyOverrideForEntity === "function";
     if (!playerId || !isPlayerLike) {
-      throw new Error("MisideText.visibleTo must contain only Player instances.");
+      throw createLocalizedError(LOCALIZATION_KEYS.error.visibleToPlayerInstances);
     }
 
     if (seenPlayerIds.has(playerId)) {
@@ -1271,26 +1297,31 @@ function handleMisideTextCommand(origin, ...rawArgs) {
 
   const timingConfig = parseCommandTimingSpec(timings);
   if (!timingConfig.ok) {
-    return {
-      status: CustomCommandStatus.Failure,
-      message: timingConfig.message
-    };
+    return createLocalizedCommandResult(
+      origin,
+      CustomCommandStatus.Failure,
+      timingConfig.messageKey,
+      timingConfig.messageArgs
+    );
   }
 
   const renderConfig = parseCommandRenderFlags(renderFlags);
   if (!renderConfig.ok) {
-    return {
-      status: CustomCommandStatus.Failure,
-      message: renderConfig.message
-    };
+    return createLocalizedCommandResult(
+      origin,
+      CustomCommandStatus.Failure,
+      renderConfig.messageKey,
+      renderConfig.messageArgs
+    );
   }
 
   const context = resolveCommandSpawnContext(origin, location);
   if (!context.dimension) {
-    return {
-      status: CustomCommandStatus.Failure,
-      message: "MisideText requires an entity or command-block dimension context."
-    };
+    return createLocalizedCommandResult(
+      origin,
+      CustomCommandStatus.Failure,
+      LOCALIZATION_KEYS.command.failureContext
+    );
   }
 
   const rotation = {
@@ -1318,10 +1349,12 @@ function handleMisideTextCommand(origin, ...rawArgs) {
     );
   });
 
-  return {
-    status: CustomCommandStatus.Success,
-    message: `Spawned MisideText: ${text}`
-  };
+  return createLocalizedCommandResult(
+    origin,
+    CustomCommandStatus.Success,
+    LOCALIZATION_KEYS.command.success,
+    [`${text ?? ""}`]
+  );
 }
 
 function parseCommandTimingSpec(value) {
@@ -1354,7 +1387,8 @@ function parseCommandTimingSpec(value) {
   if (tokens.length > 4) {
     return {
       ok: false,
-      message: "MisideText timings must be either a single hold duration or up to four comma-separated values: fadeIn,hold,rest,fadeOut."
+      messageKey: LOCALIZATION_KEYS.command.failureTimings,
+      messageArgs: [createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.timings)]
     };
   }
 
@@ -1438,7 +1472,8 @@ function parseCommandRenderFlags(value) {
 
   return {
     ok: false,
-    message: "MisideText renderFlags must be 'default', a 3-bit string such as 110"
+    messageKey: LOCALIZATION_KEYS.command.failureRenderFlags,
+    messageArgs: [createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.renderFlags)]
   };
 }
 
@@ -1460,7 +1495,8 @@ function parseCommandNumberToken(value, label) {
   if (!Number.isFinite(parsed) || parsed < 0) {
     return {
       ok: false,
-      message: `MisideText ${label} values must be non-negative numbers.`
+      messageKey: LOCALIZATION_KEYS.command.failureNonNegative,
+      messageArgs: [resolveCommandParameterTextArgument(label)]
     };
   }
 
@@ -2949,7 +2985,7 @@ function normalizeSubtitleTextInputValue(text) {
   }
 
   if (!isMisideTextContentObject(text)) {
-    throw new Error("MisideText text must be a string or MisideTextContent.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.textType);
   }
 
   return normalizeMisideTextContent(text);
@@ -2965,11 +3001,11 @@ function isMisideTextContentObject(value) {
 function normalizeMisideTextContent(value) {
   const keys = Object.keys(value);
   if (keys.length !== 1 || keys[0] !== "segments") {
-    throw new Error("MisideTextContent only supports a segments array.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.contentSegmentsOnly);
   }
 
   if (!Array.isArray(value.segments)) {
-    throw new Error("MisideTextContent.segments must be an array.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.contentSegmentsArray);
   }
 
   return {
@@ -2979,14 +3015,14 @@ function normalizeMisideTextContent(value) {
 
 function normalizeMisideTextSegment(entry) {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
-    throw new Error("MisideTextContent.segments entries must be objects with a string text property and an optional color object.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.contentSegmentEntry);
   }
 
   const keys = Object.keys(entry);
   if (!keys.includes("text") ||
     keys.some((key) => key !== "text" && key !== "color") ||
     typeof entry.text !== "string") {
-    throw new Error("MisideTextContent.segments entries must be objects with a string text property and an optional color object.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.contentSegmentEntry);
   }
 
   const normalized = {
@@ -3002,7 +3038,7 @@ function normalizeMisideTextSegment(entry) {
 
 function normalizeMisideTextColor(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error("MisideTextContent.segments[].color must be an object with red, green, and blue values.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.colorObject);
   }
 
   const keys = Object.keys(value);
@@ -3010,7 +3046,7 @@ function normalizeMisideTextColor(value) {
     !keys.includes("red") ||
     !keys.includes("green") ||
     !keys.includes("blue")) {
-    throw new Error("MisideTextContent.segments[].color must be an object with red, green, and blue values.");
+    throw createLocalizedError(LOCALIZATION_KEYS.error.colorObject);
   }
 
   return {
@@ -3022,7 +3058,7 @@ function normalizeMisideTextColor(value) {
 
 function normalizeMisideTextColorChannel(value, name) {
   if (!Number.isInteger(value) || value < 0 || value > 255) {
-    throw new Error(`MisideTextContent.segments[].color.${name} must be an integer between 0 and 255.`);
+    throw createLocalizedError(LOCALIZATION_KEYS.error.colorChannelRange, [name]);
   }
 
   return value;
@@ -3447,4 +3483,87 @@ function removeEntity(entity) {
   if (entity?.isValid) {
     entity.remove();
   }
+}
+
+function createLocalizedCommandResult(origin, status, messageKey, messageArgs = []) {
+  sendLocalizedCommandMessage(origin, messageKey, messageArgs);
+  return {
+    status
+  };
+}
+
+function sendLocalizedCommandMessage(origin, messageKey, messageArgs = []) {
+  const feedbackTarget = origin?.sourceEntity;
+  if (!feedbackTarget?.isValid || typeof feedbackTarget.sendMessage !== "function") {
+    return false;
+  }
+
+  try {
+    feedbackTarget.sendMessage(buildTranslatedRawMessage(messageKey, messageArgs));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function buildTranslatedRawMessage(messageKey, messageArgs = []) {
+  if (!Array.isArray(messageArgs) || messageArgs.length === 0) {
+    return {
+      translate: messageKey
+    };
+  }
+
+  const usesOnlyStrings = messageArgs.every((arg) => typeof arg === "string");
+  return {
+    translate: messageKey,
+    with: usesOnlyStrings
+      ? messageArgs
+      : { rawtext: messageArgs.map((arg) => normalizeTranslatedTextArgument(arg)) }
+  };
+}
+
+function createTranslatedTextArgument(translate) {
+  return { translate };
+}
+
+function normalizeTranslatedTextArgument(arg) {
+  if (typeof arg === "string") {
+    return { text: arg };
+  }
+
+  if (arg && typeof arg === "object" && !Array.isArray(arg)) {
+    if (typeof arg.translate === "string") {
+      return { translate: arg.translate };
+    }
+
+    if (typeof arg.text === "string") {
+      return { text: arg.text };
+    }
+  }
+
+  return { text: `${arg ?? ""}` };
+}
+
+function resolveCommandParameterTextArgument(label) {
+  if (label === "timings") {
+    return createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.timings);
+  }
+
+  if (label === "renderFlags") {
+    return createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.renderFlags);
+  }
+
+  return `${label ?? ""}`;
+}
+
+function createLocalizedError(messageKey, messageArgs = []) {
+  return new Error(formatLocalizedErrorMessage(messageKey, messageArgs));
+}
+
+function formatLocalizedErrorMessage(messageKey, messageArgs = []) {
+  if (!Array.isArray(messageArgs) || messageArgs.length === 0) {
+    return messageKey;
+  }
+
+  return `${messageKey}:${messageArgs.map((arg) => `${arg ?? ""}`).join(",")}`;
 }

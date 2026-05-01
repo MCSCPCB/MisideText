@@ -29,7 +29,7 @@ miside:text <text: string> [timings: string] [scale: float] [location: x y z] [p
 
 ## 示例
 
-面向执行者生成字幕：
+面向执行者创建字幕：
 
 ```mcfunction
 /miside:text "你好啊"
@@ -71,7 +71,7 @@ miside:text <text: string> [timings: string] [scale: float] [location: x y z] [p
 /miside:text "你好啊" "2,2,2,2" 1 ~ ~1 ~ 0 90 0
 ```
 
-在绝对坐标生成字幕：
+在绝对坐标创建字幕：
 
 ```mcfunction
 /miside:text "你好啊" "2" 1 0 64 0 0 90 0
