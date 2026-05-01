@@ -1438,7 +1438,7 @@ function parseCommandRenderFlags(value) {
 
   return {
     ok: false,
-    message: "MisideText renderFlags must be 'default', a 3-bit string such as 110, or a bitmask integer from 0 to 7."
+    message: "MisideText renderFlags must be 'default', a 3-bit string such as 110"
   };
 }
 
