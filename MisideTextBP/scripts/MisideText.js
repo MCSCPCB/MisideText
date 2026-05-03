@@ -35,6 +35,9 @@ const SLOT_RANDOM_SCALAR_COUNT = 9;
 const GLYPH_BATCH_SETUP_SLOT_CHUNK_SIZE = 4;
 const GLYPH_BATCH_DROP_COLLISION_CHUNK_SIZE = 32;
 const GLYPH_ADVANCE = 0.736;
+const GLYPH_DEPTH_BIAS_ADJACENT_STEP = 0.00035;
+const GLYPH_DEPTH_BIAS_MAX_OFFSET = GLYPH_DEPTH_BIAS_ADJACENT_STEP * 3.5;
+const GLYPH_DEPTH_BIAS_MIN_SPACING_EPSILON = 0.000001;
 const FALLBACK_GLYPH_CODE_POINT = 0x003F;
 const SHARD_LINE_SPACING = 0.552;
 const GLYPH_BATCH_COLLISION_FIELD_RADIUS = 12;
@@ -90,13 +93,14 @@ const LOCALIZATION_KEYS = Object.freeze({
     description: "misidetext.command.description",
     success: "misidetext.command.success",
     failureContext: "misidetext.command.failure.context",
-    failureTimings: "misidetext.command.failure.timings",
-    failureRenderFlags: "misidetext.command.failure.render_flags",
-    failureNonNegative: "misidetext.command.failure.non_negative"
-  }),
-  parameter: Object.freeze({
-    timings: "misidetext.parameter.timings",
-    renderFlags: "misidetext.parameter.render_flags"
+    failureSubtitleRequiresEntity: "misidetext.command.failure.subtitle_requires_entity",
+    failureOptionsFormat: "misidetext.command.failure.options_format",
+    failureOptionUnknown: "misidetext.command.failure.option_unknown",
+    failureOptionInvalid: "misidetext.command.failure.option_invalid",
+    failureOptionConflict: "misidetext.command.failure.option_conflict",
+    failureOptionRequiresSubtitle: "misidetext.command.failure.option_requires_subtitle",
+    failureNonNegative: "misidetext.command.failure.non_negative",
+    failurePositive: "misidetext.command.failure.positive"
   }),
   error: Object.freeze({
     dimensionRequired: "misidetext.error.dimension_required",
@@ -670,6 +674,7 @@ export class MisideText {
     const anchor = this._resolveAnchor();
     const baseRotation = toBaseRotation(this._rotation);
     const basis = this._resolveBasis(baseRotation);
+    const depthBias = resolveGlyphDepthBiasConfig(this._letterSpacing);
     const stageTimings = resolveStageTimings(totalSlots, {
       fadeInDuration: this._fadeInDuration,
       holdDuration: this._holdDuration,
@@ -703,6 +708,9 @@ export class MisideText {
       depthTest: this._depthTest,
       backfaceVisible: this._backfaceVisible,
       glow: this._glow,
+      depthBiasSlope: depthBias.slope,
+      depthBiasStep: depthBias.step,
+      depthBiasMaxOffset: depthBias.maxOffset,
       setupSig: 1,
       dropSig: 0,
       dropStarted: false,
@@ -885,8 +893,7 @@ function installMisideTextCommand() {
   commandInstalled = true;
   system.beforeEvents.startup.subscribe((initEvent) => {
     const commandRegistry = initEvent.customCommandRegistry;
-    const locationParamType = CustomCommandParamType?.Position ?? CustomCommandParamType?.Location;
-    if (!commandRegistry || !locationParamType) {
+    if (!commandRegistry) {
       return;
     }
 
@@ -899,13 +906,8 @@ function installMisideTextCommand() {
         { name: "text", type: CustomCommandParamType.String }
       ],
       optionalParameters: [
-        { name: "timings", type: CustomCommandParamType.String },
-        { name: "scale", type: CustomCommandParamType.Float },
-        { name: "location", type: locationParamType },
-        { name: "pitch", type: CustomCommandParamType.Float },
-        { name: "yaw", type: CustomCommandParamType.Float },
-        { name: "roll", type: CustomCommandParamType.Float },
-        { name: "renderFlags", type: CustomCommandParamType.String }
+        { name: "hold", type: CustomCommandParamType.Float },
+        { name: "options", type: CustomCommandParamType.String }
       ]
     }, handleMisideTextCommand);
   });
@@ -1286,65 +1288,94 @@ function handleMisideTextCommand(origin, ...rawArgs) {
   const args = rawArgs.length === 1 && Array.isArray(rawArgs[0]) ? rawArgs[0] : rawArgs;
   const [
     text,
-    timings,
-    scale = DEFAULT_SCALE,
-    location,
-    pitch,
-    yaw,
-    roll,
-    renderFlags
+    hold = DEFAULT_HOLD_DURATION,
+    options
   ] = args;
 
-  const timingConfig = parseCommandTimingSpec(timings);
-  if (!timingConfig.ok) {
+  const holdConfig = parseCommandNonNegativeNumberValue(hold, "hold");
+  if (!holdConfig.ok) {
     return createLocalizedCommandResult(
       origin,
       CustomCommandStatus.Failure,
-      timingConfig.messageKey,
-      timingConfig.messageArgs
+      holdConfig.messageKey,
+      holdConfig.messageArgs
     );
   }
 
-  const renderConfig = parseCommandRenderFlags(renderFlags);
-  if (!renderConfig.ok) {
+  const optionsConfig = parseCommandOptionsSpec(origin, options);
+  if (!optionsConfig.ok) {
     return createLocalizedCommandResult(
       origin,
       CustomCommandStatus.Failure,
-      renderConfig.messageKey,
-      renderConfig.messageArgs
+      optionsConfig.messageKey,
+      optionsConfig.messageArgs
     );
   }
 
-  const context = resolveCommandSpawnContext(origin, location);
-  if (!context.dimension) {
-    return createLocalizedCommandResult(
-      origin,
-      CustomCommandStatus.Failure,
-      LOCALIZATION_KEYS.command.failureContext
-    );
+  if (!optionsConfig.subtitle) {
+    const context = resolveCommandSpawnContext(origin, optionsConfig.location);
+    if (!context.dimension) {
+      return createLocalizedCommandResult(
+        origin,
+        CustomCommandStatus.Failure,
+        LOCALIZATION_KEYS.command.failureContext
+      );
+    }
   }
-
-  const rotation = {
-    x: normalizeNumber(pitch, context.rotation.x),
-    y: normalizeNumber(yaw, context.rotation.y),
-    z: normalizeNumber(roll, context.rotation.z)
-  };
 
   system.run(() => {
+    const subtitleText = `${text ?? ""}`;
+    const holdDuration = optionsConfig.holdDuration ?? holdConfig.value;
+
+    if (optionsConfig.subtitle) {
+      const context = resolveCommandSubtitleSpawnContext(origin, optionsConfig);
+      new MisideText(
+        context.location,
+        subtitleText,
+        {
+          dimension: context.dimension,
+          location: context.location,
+          rotation: context.rotation,
+          basisDirection: context.basisDirection,
+          fadeInDuration: optionsConfig.fadeInDuration,
+          holdDuration,
+          restDuration: optionsConfig.restDuration,
+          fadeOutDuration: optionsConfig.fadeOutDuration,
+          scale: optionsConfig.scale,
+          letterSpacing: optionsConfig.letterSpacing,
+          lineSpacing: optionsConfig.lineSpacing,
+          depthTest: optionsConfig.depthTest,
+          backfaceVisible: optionsConfig.backfaceVisible,
+          glow: optionsConfig.glow
+        }
+      );
+      return;
+    }
+
+    const context = resolveCommandSpawnContext(origin, optionsConfig.location);
+    const rotation = {
+      x: normalizeNumber(optionsConfig.pitch, context.rotation.x),
+      y: normalizeNumber(optionsConfig.yaw, context.rotation.y),
+      z: normalizeNumber(optionsConfig.roll, context.rotation.z)
+    };
+
     new MisideText(
-      location ? normalizeVec3(location) : context.location,
-      `${text ?? ""}`,
+      context.location,
+      subtitleText,
       {
         dimension: context.dimension,
+        location: context.location,
         rotation,
-        fadeInDuration: timingConfig.fadeInDuration,
-        holdDuration: timingConfig.holdDuration,
-        restDuration: timingConfig.restDuration,
-        fadeOutDuration: timingConfig.fadeOutDuration,
-        scale: normalizePositiveNumber(scale, DEFAULT_SCALE),
-        depthTest: renderConfig.depthTest,
-        backfaceVisible: renderConfig.backfaceVisible,
-        glow: renderConfig.glow
+        fadeInDuration: optionsConfig.fadeInDuration,
+        holdDuration,
+        restDuration: optionsConfig.restDuration,
+        fadeOutDuration: optionsConfig.fadeOutDuration,
+        scale: optionsConfig.scale,
+        letterSpacing: optionsConfig.letterSpacing,
+        lineSpacing: optionsConfig.lineSpacing,
+        depthTest: optionsConfig.depthTest,
+        backfaceVisible: optionsConfig.backfaceVisible,
+        glow: optionsConfig.glow
       }
     );
   });
@@ -1357,146 +1388,203 @@ function handleMisideTextCommand(origin, ...rawArgs) {
   );
 }
 
-function parseCommandTimingSpec(value) {
-  if (value === undefined || value === null || `${value}`.trim() === "") {
-    return {
-      ok: true,
-      fadeInDuration: null,
-      holdDuration: DEFAULT_HOLD_DURATION,
-      restDuration: DEFAULT_REST_DURATION,
-      fadeOutDuration: DEFAULT_FADE_OUT_DURATION
-    };
-  }
-
-  const tokens = `${value}`.split(",").map((token) => token.trim());
-  if (tokens.length === 1) {
-    const holdDuration = parseCommandNumberToken(tokens[0], "timings");
-    if (!holdDuration.ok) {
-      return holdDuration;
-    }
-
-    return {
-      ok: true,
-      fadeInDuration: null,
-      holdDuration: normalizeDuration(holdDuration.value, DEFAULT_HOLD_DURATION),
-      restDuration: DEFAULT_REST_DURATION,
-      fadeOutDuration: DEFAULT_FADE_OUT_DURATION
-    };
-  }
-
-  if (tokens.length > 4) {
-    return {
-      ok: false,
-      messageKey: LOCALIZATION_KEYS.command.failureTimings,
-      messageArgs: [createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.timings)]
-    };
-  }
-
-  const fadeInDuration = parseCommandOptionalNumberToken(tokens[0], "timings");
-  if (!fadeInDuration.ok) {
-    return fadeInDuration;
-  }
-
-  const holdDuration = parseCommandOptionalNumberToken(tokens[1], "timings");
-  if (!holdDuration.ok) {
-    return holdDuration;
-  }
-
-  const restDuration = parseCommandOptionalNumberToken(tokens[2], "timings");
-  if (!restDuration.ok) {
-    return restDuration;
-  }
-
-  const fadeOutDuration = parseCommandOptionalNumberToken(tokens[3], "timings");
-  if (!fadeOutDuration.ok) {
-    return fadeOutDuration;
-  }
-
+function createDefaultCommandOptionsConfig() {
   return {
-    ok: true,
-    fadeInDuration: fadeInDuration.value == null
-      ? null
-      : normalizeOptionalDuration(fadeInDuration.value),
-    holdDuration: holdDuration.value == null
-      ? DEFAULT_HOLD_DURATION
-      : normalizeDuration(holdDuration.value, DEFAULT_HOLD_DURATION),
-    restDuration: restDuration.value == null
-      ? DEFAULT_REST_DURATION
-      : normalizeDuration(restDuration.value, DEFAULT_REST_DURATION),
-    fadeOutDuration: fadeOutDuration.value == null
-      ? DEFAULT_FADE_OUT_DURATION
-      : normalizeDuration(fadeOutDuration.value, DEFAULT_FADE_OUT_DURATION)
+    subtitle: false,
+    location: null,
+    scale: undefined,
+    pitch: undefined,
+    yaw: undefined,
+    roll: undefined,
+    letterSpacing: undefined,
+    lineSpacing: undefined,
+    depthTest: undefined,
+    backfaceVisible: undefined,
+    glow: undefined,
+    fadeInDuration: undefined,
+    holdDuration: undefined,
+    restDuration: undefined,
+    fadeOutDuration: undefined,
+    distance: undefined,
+    drop: undefined,
+    specifiedKeys: new Set()
   };
 }
 
-function parseCommandRenderFlags(value) {
-  if (value === undefined || value === null || `${value}`.trim() === "") {
-    return {
-      ok: true,
-      depthTest: DEFAULT_DEPTH_TEST,
-      backfaceVisible: DEFAULT_BACKFACE_VISIBLE,
-      glow: DEFAULT_GLOW
-    };
-  }
-
-  const normalized = `${value}`.trim().toLowerCase();
-  if (normalized === "default") {
-    return {
-      ok: true,
-      depthTest: DEFAULT_DEPTH_TEST,
-      backfaceVisible: DEFAULT_BACKFACE_VISIBLE,
-      glow: DEFAULT_GLOW
-    };
-  }
-
-  if (/^[01]{3}$/.test(normalized)) {
-    return {
-      ok: true,
-      depthTest: normalized.charAt(0) === "1",
-      backfaceVisible: normalized.charAt(1) === "1",
-      glow: normalized.charAt(2) === "1"
-    };
-  }
-
-  if (/^\d+$/.test(normalized)) {
-    const bitmask = Number(normalized);
-    if (Number.isInteger(bitmask) && bitmask >= 0 && bitmask <= 7) {
-      return {
-        ok: true,
-        depthTest: (bitmask & 1) !== 0,
-        backfaceVisible: (bitmask & 2) !== 0,
-        glow: (bitmask & 4) !== 0
-      };
-    }
-  }
-
-  return {
-    ok: false,
-    messageKey: LOCALIZATION_KEYS.command.failureRenderFlags,
-    messageArgs: [createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.renderFlags)]
-  };
-}
-
-function parseCommandOptionalNumberToken(value, label) {
+function parseCommandOptionsSpec(origin, value) {
+  const config = createDefaultCommandOptionsConfig();
   const normalized = `${value ?? ""}`.trim();
   if (normalized === "") {
     return {
       ok: true,
-      value: null
+      ...config
     };
   }
 
-  return parseCommandNumberToken(normalized, label);
-}
-
-function parseCommandNumberToken(value, label) {
-  const normalized = `${value ?? ""}`.trim();
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed) || parsed < 0) {
+  const entries = normalized
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  if (entries.length === 0) {
     return {
       ok: false,
-      messageKey: LOCALIZATION_KEYS.command.failureNonNegative,
-      messageArgs: [resolveCommandParameterTextArgument(label)]
+      messageKey: LOCALIZATION_KEYS.command.failureOptionsFormat,
+      messageArgs: []
+    };
+  }
+
+  for (const entry of entries) {
+    const separatorIndex = entry.indexOf("=");
+    if (separatorIndex <= 0 || separatorIndex >= entry.length - 1) {
+      return {
+        ok: false,
+        messageKey: LOCALIZATION_KEYS.command.failureOptionsFormat,
+        messageArgs: []
+      };
+    }
+
+    const key = entry.slice(0, separatorIndex).trim();
+    const rawValue = entry.slice(separatorIndex + 1).trim();
+    if (!key || rawValue === "") {
+      return {
+        ok: false,
+        messageKey: LOCALIZATION_KEYS.command.failureOptionsFormat,
+        messageArgs: []
+      };
+    }
+
+    config.specifiedKeys.add(key);
+
+    switch (key) {
+      case "subtitle": {
+        const parsed = parseCommandBooleanValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config.subtitle = parsed.value;
+        break;
+      }
+      case "location": {
+        const parsed = parseCommandLocationValue(origin, rawValue);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config.location = parsed.value;
+        break;
+      }
+      case "scale": {
+        const parsed = parseCommandPositiveNumberValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config.scale = parsed.value;
+        break;
+      }
+      case "pitch":
+      case "yaw":
+      case "roll":
+      case "drop": {
+        const parsed = parseCommandPlainNumberValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config[key] = parsed.value;
+        break;
+      }
+      case "letterSpacing":
+      case "lineSpacing":
+      case "fadeIn":
+      case "hold":
+      case "rest":
+      case "fadeOut": {
+        const parsed = parseCommandNonNegativeNumberValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+
+        if (key === "fadeIn") {
+          config.fadeInDuration = parsed.value;
+        } else if (key === "hold") {
+          config.holdDuration = parsed.value;
+        } else if (key === "rest") {
+          config.restDuration = parsed.value;
+        } else if (key === "fadeOut") {
+          config.fadeOutDuration = parsed.value;
+        } else {
+          config[key] = parsed.value;
+        }
+        break;
+      }
+      case "depthTest":
+      case "backfaceVisible":
+      case "glow": {
+        const parsed = parseCommandBooleanValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config[key] = parsed.value;
+        break;
+      }
+      case "distance": {
+        const parsed = parseCommandPositiveNumberValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config.distance = parsed.value;
+        break;
+      }
+      default:
+        return {
+          ok: false,
+          messageKey: LOCALIZATION_KEYS.command.failureOptionUnknown,
+          messageArgs: [key]
+        };
+    }
+  }
+
+  if (config.subtitle) {
+    if (!origin?.sourceEntity?.isValid) {
+      return {
+        ok: false,
+        messageKey: LOCALIZATION_KEYS.command.failureSubtitleRequiresEntity,
+        messageArgs: []
+      };
+    }
+
+    for (const key of ["location", "pitch", "yaw", "roll"]) {
+      if (config.specifiedKeys.has(key)) {
+        return {
+          ok: false,
+          messageKey: LOCALIZATION_KEYS.command.failureOptionConflict,
+          messageArgs: [key]
+        };
+      }
+    }
+  } else {
+    for (const key of ["distance", "drop"]) {
+      if (config.specifiedKeys.has(key)) {
+        return {
+          ok: false,
+          messageKey: LOCALIZATION_KEYS.command.failureOptionRequiresSubtitle,
+          messageArgs: [key]
+        };
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    ...config
+  };
+}
+
+function parseCommandPlainNumberValue(value, label) {
+  const parsed = Number(`${value ?? ""}`.trim());
+  if (!Number.isFinite(parsed)) {
+    return {
+      ok: false,
+      messageKey: LOCALIZATION_KEYS.command.failureOptionInvalid,
+      messageArgs: [label]
     };
   }
 
@@ -1506,7 +1594,127 @@ function parseCommandNumberToken(value, label) {
   };
 }
 
-function resolveCommandSpawnContext(origin, explicitLocation) {
+function parseCommandNonNegativeNumberValue(value, label) {
+  const parsed = Number(`${value ?? ""}`.trim());
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return {
+      ok: false,
+      messageKey: LOCALIZATION_KEYS.command.failureNonNegative,
+      messageArgs: [label]
+    };
+  }
+
+  return {
+    ok: true,
+    value: parsed
+  };
+}
+
+function parseCommandPositiveNumberValue(value, label) {
+  const parsed = Number(`${value ?? ""}`.trim());
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return {
+      ok: false,
+      messageKey: LOCALIZATION_KEYS.command.failurePositive,
+      messageArgs: [label]
+    };
+  }
+
+  return {
+    ok: true,
+    value: parsed
+  };
+}
+
+function parseCommandBooleanValue(value, label) {
+  const normalized = `${value ?? ""}`.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1") {
+    return {
+      ok: true,
+      value: true
+    };
+  }
+
+  if (normalized === "false" || normalized === "0") {
+    return {
+      ok: true,
+      value: false
+    };
+  }
+
+  return {
+    ok: false,
+    messageKey: LOCALIZATION_KEYS.command.failureOptionInvalid,
+    messageArgs: [label]
+  };
+}
+
+function parseCommandLocationValue(origin, value) {
+  const tokens = `${value ?? ""}`.split(",").map((token) => token.trim());
+  if (tokens.length !== 3 || tokens.some((token) => token.length === 0 || token.startsWith("^"))) {
+    return {
+      ok: false,
+      messageKey: LOCALIZATION_KEYS.command.failureOptionInvalid,
+      messageArgs: ["location"]
+    };
+  }
+
+  const base = resolveCommandCoordinateBase(origin);
+  const x = parseCommandCoordinateToken(tokens[0], base?.x);
+  const y = parseCommandCoordinateToken(tokens[1], base?.y);
+  const z = parseCommandCoordinateToken(tokens[2], base?.z);
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+    return {
+      ok: false,
+      messageKey: LOCALIZATION_KEYS.command.failureOptionInvalid,
+      messageArgs: ["location"]
+    };
+  }
+
+  return {
+    ok: true,
+    value: { x, y, z }
+  };
+}
+
+function parseCommandCoordinateToken(token, baseValue) {
+  if (token.startsWith("~")) {
+    if (!Number.isFinite(baseValue)) {
+      return Number.NaN;
+    }
+
+    const offsetText = token.slice(1).trim();
+    if (offsetText === "") {
+      return baseValue;
+    }
+
+    const offset = Number(offsetText);
+    return Number.isFinite(offset) ? baseValue + offset : Number.NaN;
+  }
+
+  const absolute = Number(token);
+  return Number.isFinite(absolute) ? absolute : Number.NaN;
+}
+
+function resolveCommandCoordinateBase(origin) {
+  const sourceEntity = origin?.sourceEntity;
+  if (sourceEntity?.isValid) {
+    return cloneVec(sourceEntity.location);
+  }
+
+  const sourceBlock = origin?.sourceBlock;
+  if (sourceBlock) {
+    return {
+      x: sourceBlock.location.x,
+      y: sourceBlock.location.y,
+      z: sourceBlock.location.z
+    };
+  }
+
+  return null;
+}
+
+function resolveCommandSpawnContext(origin, explicitLocation = null) {
   const sourceEntity = origin?.sourceEntity;
   if (sourceEntity?.isValid) {
     const direction = sourceEntity.getViewDirection();
@@ -1544,6 +1752,29 @@ function resolveCommandSpawnContext(origin, explicitLocation) {
   };
 }
 
+function resolveCommandSubtitleSpawnContext(origin, optionsConfig) {
+  const sourceEntity = origin?.sourceEntity;
+  const direction = normalizeOptionalDirection(sourceEntity?.getViewDirection()) ??
+    normalizeLocation(sourceEntity?.getViewDirection());
+  const distance = normalizePositiveNumber(optionsConfig.distance, SUBTITLE_DISTANCE);
+  const drop = normalizeNumber(optionsConfig.drop, SUBTITLE_DROP);
+  const location = normalizeLocation(addVec(
+    addVec(sourceEntity.getHeadLocation(), scaleVec(direction, distance)),
+    { x: 0, y: -drop, z: 0 }
+  ));
+
+  return {
+    dimension: sourceEntity.dimension,
+    location,
+    rotation: {
+      x: sourceEntity.getRotation().x,
+      y: sourceEntity.getRotation().y,
+      z: 0
+    },
+    basisDirection: direction
+  };
+}
+
 function createEmptyEffectState() {
   const defaultStageTimings = resolveStageTimings(countSubtitleSlots(DEFAULT_TEXT), {
     fadeInDuration: null,
@@ -1576,6 +1807,9 @@ function createEmptyEffectState() {
     depthTest: DEFAULT_DEPTH_TEST,
     backfaceVisible: DEFAULT_BACKFACE_VISIBLE,
     glow: DEFAULT_GLOW,
+    depthBiasSlope: 0,
+    depthBiasStep: 0,
+    depthBiasMaxOffset: 0,
     setupSig: 0,
     dropSig: 0,
     dropStarted: false,
@@ -1657,6 +1891,26 @@ function buildLetterDescriptors(
   return {
     descriptors,
     totalSlots: slotIndex
+  };
+}
+
+function resolveGlyphDepthBiasConfig(letterSpacing = GLYPH_ADVANCE) {
+  const normalizedLetterSpacing = normalizeNonNegativeNumber(letterSpacing, GLYPH_ADVANCE);
+  if (normalizedLetterSpacing >= GLYPH_ADVANCE) {
+    return {
+      slope: 0,
+      step: 0,
+      maxOffset: 0
+    };
+  }
+
+  const adjacentStep = GLYPH_DEPTH_BIAS_ADJACENT_STEP;
+  return {
+    slope: normalizedLetterSpacing > GLYPH_DEPTH_BIAS_MIN_SPACING_EPSILON
+      ? adjacentStep / normalizedLetterSpacing
+      : 0,
+    step: adjacentStep,
+    maxOffset: GLYPH_DEPTH_BIAS_MAX_OFFSET
   };
 }
 
@@ -2004,6 +2258,9 @@ function createBatchSharedAssignment(effect, options = {}) {
     `v.m_depth_test=${effect.depthTest ? 1 : 0};`,
     `v.m_backface_visible=${effect.backfaceVisible ? 1 : 0};`,
     `v.m_glow=${effect.glow ? 1 : 0};`,
+    `v.m_depth_bias_slope=${formatFloat(effect.depthBiasSlope ?? 0)};`,
+    `v.m_depth_bias_step=${formatFloat(effect.depthBiasStep ?? 0)};`,
+    `v.m_depth_bias_max=${formatFloat(effect.depthBiasMaxOffset ?? 0)};`,
     `v.m_base_pitch=${formatFloat(effect.baseRotation.pitch)};`,
     `v.m_base_yaw=${formatFloat(effect.baseRotation.yaw)};`,
     `v.m_base_roll=${formatFloat(effect.baseRotation.roll)};`,
@@ -2087,6 +2344,9 @@ function buildBatchControlSignature(effect) {
     effect.backfaceVisible ? 1 : 0,
     effect.glow ? 1 : 0,
     formatFloat(effect.scale),
+    formatFloat(effect.depthBiasSlope ?? 0),
+    formatFloat(effect.depthBiasStep ?? 0),
+    formatFloat(effect.depthBiasMaxOffset ?? 0),
     formatFloat(effect.baseRotation.pitch),
     formatFloat(effect.baseRotation.yaw),
     formatFloat(effect.baseRotation.roll),
@@ -3522,10 +3782,6 @@ function buildTranslatedRawMessage(messageKey, messageArgs = []) {
   };
 }
 
-function createTranslatedTextArgument(translate) {
-  return { translate };
-}
-
 function normalizeTranslatedTextArgument(arg) {
   if (typeof arg === "string") {
     return { text: arg };
@@ -3543,19 +3799,6 @@ function normalizeTranslatedTextArgument(arg) {
 
   return { text: `${arg ?? ""}` };
 }
-
-function resolveCommandParameterTextArgument(label) {
-  if (label === "timings") {
-    return createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.timings);
-  }
-
-  if (label === "renderFlags") {
-    return createTranslatedTextArgument(LOCALIZATION_KEYS.parameter.renderFlags);
-  }
-
-  return `${label ?? ""}`;
-}
-
 function createLocalizedError(messageKey, messageArgs = []) {
   return new Error(formatLocalizedErrorMessage(messageKey, messageArgs));
 }

@@ -1,6 +1,6 @@
 # `/miside:text`
 
-生成一个 `MisideText` 仿米塔字幕
+创建一条 `MisideText` 仿米塔字幕
 
 | 属性 | 值 |
 | --- | --- |
@@ -11,83 +11,132 @@
 ## 语法
 
 ```mcfunction
-miside:text <text: string> [timings: string] [scale: float] [location: x y z] [pitch: float] [yaw: float] [roll: float] [renderFlags: string]
+miside:text <text: string> [hold: float] [options: string]
 ```
 
 ## 参数
 
 | 参数 | 类型 | 可选 | 说明 |
 | --- | --- | --- | --- |
-| `text` | `string` | 否 | 字幕内容。只接受字符串文本。 |
-| `timings` | `string` | 是 | 时序参数。单个数字则对应 `hold` 悬停时长；也可以使用最多四个逗号分隔值，格式为 `fadeIn,hold,rest,fadeOut`。留空的位置会使用默认值。 |
-| `scale` | `float` | 是 | 整体字幕缩放。默认值：`1`。小于或等于 `0` 的值会回退到 `1`。 |
-| `location` | `position` | 是 | 字幕锚点位置。 |
-| `pitch` | `float` | 是 | 整个字幕组的俯仰角，单位为度。 |
-| `yaw` | `float` | 是 | 整个字幕组的偏航角，单位为度。 |
-| `roll` | `float` | 是 | 整个字幕组的滚转角，单位为度。 |
-| `renderFlags` | `string` | 是 | 渲染开关参数。可填 `default`、三位数字串 `DBG`。其中 `D = depthTest`、`B = backfaceVisible`、`G = glow`，需要启用的参数则将值填为1，否则填0。默认值：`110` 即 `depthTest = true`、`backfaceVisible = true`、`glow = false`。 |。 |
+| `text` | `string` | 否 | 字幕内容。 |
+| `hold` | `float` | 是 | 停留时长。默认值：`2`。必须大于或等于 `0`。 |
+| `options` | `string` | 是 | 选项。格式：`key=value;key=value;...`。如果需要传入 `options`，但不想改动停留时长，请显式传入默认值 `2`。 |
+
+## `options`
+
+`options` 为无序键值对，不受顺序影响
+
+| 键名 | 类型 | 说明 |
+| --- | --- | --- |
+| `subtitle` | `boolean` | 启用字幕模式。 |
+| `location` | `vec3` | 字幕位置。仅普通模式可用。 |
+| `scale` | `number` | 字幕缩放。 |
+| `pitch` | `number` | 俯仰角。仅普通模式可用。 |
+| `yaw` | `number` | 偏航角。仅普通模式可用。 |
+| `roll` | `number` | 滚转角。仅普通模式可用。 |
+| `letterSpacing` | `number` | 字间距。 |
+| `lineSpacing` | `number` | 行间距。 |
+| `depthTest` | `boolean` | 启用深度测试/禁用方块透视。 |
+| `backfaceVisible` | `boolean` | 启用背面可见。 |
+| `glow` | `boolean` | 启用发光。 |
+| `fadeIn` | `number` | 淡入时长。 |
+| `hold` | `number` | 停留时长。会覆盖外层 `hold`。 |
+| `rest` | `number` | 静置时长。 |
+| `fadeOut` | `number` | 淡出时长。 |
+| `distance` | `number` | 前移距离。仅字幕模式可用。 |
+| `drop` | `number` | 下移量。仅字幕模式可用。 |
+
+## 模式
+
+### 普通模式
+
+省略 `subtitle`，或写 `subtitle=false` 时使用普通模式。
+
+- 可使用 `location`
+- 可使用 `pitch`、`yaw`、`roll`
+- 省略 `location` 时：
+  - 实体执行：在执行者前方创建
+  - 命令方块执行：在命令方块上方创建
+
+### 字幕模式
+
+写 `subtitle=true` 时启用字幕模式。
+
+- 执行者必须为实体
+- 位置按执行者头部位置与视线方向计算
+- 可使用 `distance` 和 `drop`
+
+限制：
+
+- `location` 不能与 `subtitle=true` 同时使用
+- `pitch` 不能与 `subtitle=true` 同时使用
+- `yaw` 不能与 `subtitle=true` 同时使用
+- `roll` 不能与 `subtitle=true` 同时使用
 
 ## 示例
 
-面向执行者创建字幕：
+创建字幕：
 
 ```mcfunction
 /miside:text "你好啊"
 ```
 
-使用颜色代码：
+设置停留时长：
 
 ```mcfunction
-/miside:text "&c你 &好啊"
+/miside:text "你好啊" 2
 ```
 
-字幕换行显示：
+设置字间距、行间距与发光：
 
 ```mcfunction
-/miside:text "&c你/n&e好啊"
+/miside:text "你好啊" 2 "letterSpacing=0.8;lineSpacing=0.6;glow=true"
 ```
 
-字幕停留时长与缩放：
+设置完整时序：
 
 ```mcfunction
-/miside:text "你好啊" "2" 1
-```
-
-显式时间控制：
-
-```mcfunction
-/miside:text "你好啊" "2,2,5,1"
-```
-
-时间控制默认值：
-
-```mcfunction
-/miside:text "你好啊" ",2,,1"
-```
-
-时间控制、位置和旋转：
-
-```mcfunction
-/miside:text "你好啊" "2,2,2,2" 1 ~ ~1 ~ 0 90 0
+/miside:text "你好啊" 2 "fadeIn=0.5;hold=2;rest=5;fadeOut=1"
 ```
 
 在绝对坐标创建字幕：
 
 ```mcfunction
-/miside:text "你好啊" "2" 1 0 64 0 0 90 0
+/miside:text "你好啊" 2 "location=0,64,0;yaw=90"
 ```
 
-使用 `DBG` 顺序的显式渲染开关：
+在相对坐标创建字幕：
 
 ```mcfunction
-/miside:text "你好啊" "2,2,5,1" 1 ~ ~1 ~ 0 0 0 "001"
+/miside:text "你好啊" 2 "location=~,~1,~;yaw=90"
+```
+
+启用字幕模式：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "subtitle=true"
+```
+
+字幕模式下设置距离、下移与间距：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "subtitle=true;distance=2.4;drop=0.2;letterSpacing=0.8;lineSpacing=0.6"
+```
+
+命令方块使用玩家为执行者创建字幕：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "subtitle=true;distance=2.2;drop=0.25"
 ```
 
 ## 备注
 
-- 所有可选参数都按位置解析。若要设置后面的时序或变换字段，前面的可选字段也必须先补齐。
-- 如果省略 `location`，且命令由实体执行，则锚点会放在该实体视线前方 `2` 格、头部位置下方 `0.3` 格。
-- 如果省略 `pitch`、`yaw` 和 `roll` 默认为 `0 0 0`。
+- `options` 为无序键值对。
+- 重复键名时，以最后一个值为准。
+- `location` 使用 `x,y,z` 格式，例如 `0,64,0` 或 `~,~1,~`。
+- `location` 目前不支持 `^` 局部坐标。
+- `distance` 与 `drop` 仅可在 `subtitle=true` 时使用。
+- `subtitle=true` 要求执行者为实体。命令方块请配合 `/execute as ... run` 使用。
 - 颜色格式代码请使用 `&` 而不是 `§`，例如 `&c`、`&e`、`&0`。
 - 字面量 `&`，请使用 `&&`。
 - 换行，请使用 `/n`。

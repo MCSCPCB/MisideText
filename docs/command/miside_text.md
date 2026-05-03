@@ -1,6 +1,6 @@
 # `/miside:text`
 
-Spawns a `MisideText` MiSide-style subtitle.
+Creates a `MisideText` MiSide subtitle.
 
 | Property | Value |
 | --- | --- |
@@ -11,83 +11,132 @@ Spawns a `MisideText` MiSide-style subtitle.
 ## Syntax
 
 ```mcfunction
-miside:text <text: string> [timings: string] [scale: float] [location: x y z] [pitch: float] [yaw: float] [roll: float] [renderFlags: string]
+miside:text <text: string> [hold: float] [options: string]
 ```
 
 ## Arguments
 
 | Argument | Type | Optional | Description |
 | --- | --- | --- | --- |
-| `text` | `string` | No | Subtitle content. Only plain string text is accepted. |
-| `timings` | `string` | Yes | Timing parameters. A single number maps to the `hold` hover duration; you can also use up to four comma-separated values in the form `fadeIn,hold,rest,fadeOut`. Empty positions use the default values. |
-| `scale` | `float` | Yes | Overall subtitle scale. Default: `1`. Values less than or equal to `0` fall back to `1`. |
-| `location` | `position` | Yes | Subtitle anchor position. |
-| `pitch` | `float` | Yes | Pitch of the whole subtitle group, in degrees. |
-| `yaw` | `float` | Yes | Yaw of the whole subtitle group, in degrees. |
-| `roll` | `float` | Yes | Roll of the whole subtitle group, in degrees. |
-| `renderFlags` | `string` | Yes | Render toggle parameters. Use `default` or a three-digit `DBG` string. `D = depthTest`, `B = backfaceVisible`, and `G = glow`. Use `1` to enable a flag and `0` to disable it. Default: `110`, which means `depthTest = true`, `backfaceVisible = true`, and `glow = false`. |
+| `text` | `string` | No | Subtitle content. |
+| `hold` | `float` | Yes | Hold duration. Default: `2`. Must be greater than or equal to `0`. |
+| `options` | `string` | Yes | Options in the form `key=value;key=value;...`. If you want to use `options` without changing the hold duration, pass the default value `2` explicitly. |
+
+## `options`
+
+`options` is an unordered key-value list.
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `subtitle` | `boolean` | Enables subtitle mode. |
+| `location` | `vec3` | Subtitle position. Only available in normal mode. |
+| `scale` | `number` | Subtitle scale. |
+| `pitch` | `number` | Pitch. Only available in normal mode. |
+| `yaw` | `number` | Yaw. Only available in normal mode. |
+| `roll` | `number` | Roll. Only available in normal mode. |
+| `letterSpacing` | `number` | Horizontal spacing between characters. |
+| `lineSpacing` | `number` | Vertical spacing between lines. |
+| `depthTest` | `boolean` | Enables depth testing. |
+| `backfaceVisible` | `boolean` | Whether the back face is visible. |
+| `glow` | `boolean` | Enables glow. |
+| `fadeIn` | `number` | Fade-in duration. |
+| `hold` | `number` | Hold duration. Overrides the outer `hold`. |
+| `rest` | `number` | Rest duration. |
+| `fadeOut` | `number` | Fade-out duration. |
+| `distance` | `number` | Forward distance. Only available in subtitle mode. |
+| `drop` | `number` | Downward offset. Only available in subtitle mode. |
+
+## Modes
+
+### Normal Mode
+
+Normal mode is used when `subtitle` is omitted or set to `false`.
+
+- `location` is allowed.
+- `pitch`, `yaw`, and `roll` are allowed.
+- If `location` is omitted:
+  - Entity execution: spawns in front of the executor.
+  - Command block execution: spawns above the command block.
+
+### Subtitle Mode
+
+Subtitle mode is enabled with `subtitle=true`.
+
+- Requires an entity execution context.
+- The subtitle position is calculated from the executor's head position and facing direction.
+- `distance` and `drop` are available.
+
+Restrictions:
+
+- `location` cannot be used when `subtitle=true`.
+- `pitch` cannot be used when `subtitle=true`.
+- `yaw` cannot be used when `subtitle=true`.
+- `roll` cannot be used when `subtitle=true`.
 
 ## Examples
 
-Spawn a subtitle using the default context:
+Create a subtitle:
 
 ```mcfunction
 /miside:text "Hello"
 ```
 
-Use color codes:
+Set the hold duration:
 
 ```mcfunction
-/miside:text "&cHello &eWorld"
+/miside:text "Hello" 2
 ```
 
-Display a multiline subtitle:
+Set character spacing, line spacing, and glow:
 
 ```mcfunction
-/miside:text "&cHello/n&eWorld"
+/miside:text "Hello" 2 "letterSpacing=0.8;lineSpacing=0.6;glow=true"
 ```
 
-Set subtitle hold duration and scale:
+Set full timing control:
 
 ```mcfunction
-/miside:text "Hello" "2" 1
+/miside:text "Hello" 2 "fadeIn=0.5;hold=2;rest=5;fadeOut=1"
 ```
 
-Use explicit timing control:
+Spawn at absolute coordinates:
 
 ```mcfunction
-/miside:text "Hello" "2,2,5,1"
+/miside:text "Hello" 2 "location=0,64,0;yaw=90"
 ```
 
-Use timing control with defaults:
+Spawn at relative coordinates:
 
 ```mcfunction
-/miside:text "Hello" ",2,,1"
+/miside:text "Hello" 2 "location=~,~1,~;yaw=90"
 ```
 
-Use timing control, position, and rotation:
+Enable subtitle mode:
 
 ```mcfunction
-/miside:text "Hello" "2,2,2,2" 1 ~ ~1 ~ 0 90 0
+/execute as @p run miside:text "Hello" 2 "subtitle=true"
 ```
 
-Spawn a subtitle at absolute coordinates:
+Set subtitle mode distance, drop, and spacing:
 
 ```mcfunction
-/miside:text "Hello" "2" 1 0 64 0 0 90 0
+/execute as @p run miside:text "Hello" 2 "subtitle=true;distance=2.4;drop=0.2;letterSpacing=0.8;lineSpacing=0.6"
 ```
 
-Use explicit render flags in `DBG` order:
+Use a player context from a command block:
 
 ```mcfunction
-/miside:text "Hello" "2,2,5,1" 1 ~ ~1 ~ 0 0 0 "001"
+/execute as @p run miside:text "Hello" 2 "subtitle=true;distance=2.2;drop=0.25"
 ```
 
 ## Notes
 
-- All optional arguments are parsed positionally. To set a later timing or transform field, earlier optional fields must also be filled in first.
-- If `location` is omitted and the command is executed by an entity, the anchor is placed `2` blocks in front of that entity's view direction and `0.3` blocks below the entity's head position.
-- If `pitch`, `yaw`, and `roll` are omitted, they default to `0 0 0`.
+- `options` is unordered.
+- If a key is repeated, the last value wins.
+- `location` uses the `x,y,z` format, such as `0,64,0` or `~,~1,~`.
+- `location` does not currently support local `^` coordinates.
+- `distance` and `drop` require `subtitle=true`.
+- `subtitle=true` requires an entity execution context. For command blocks, use `/execute as ... run`.
 - Use `&` instead of `§` for color formatting codes, such as `&c`, `&e`, and `&0`.
 - Use `&&` for a literal `&`.
 - Use `/n` for a line break.

@@ -1,11 +1,14 @@
 misidetext.command.description=创建一条 MiSide 字幕
 misidetext.command.success=已创建 MiSide 字幕：%%1
-misidetext.command.failure.context=无法创建 MiSide 字幕：此命令需要实体或命令方块提供维度信息。
-misidetext.command.failure.timings=无法创建 MiSide 字幕：参数 %%1 必须为单个停留时长，或最多 4 个以逗号分隔的值：fadeIn,hold,rest,fadeOut。
-misidetext.command.failure.render_flags=无法创建 MiSide 字幕：参数 %%1 必须为 default，或类似 110 的 3 位二进制字符串。
+misidetext.command.failure.context=无法创建 MiSide 字幕：此命令要求执行者为实体，或由命令方块执行。
+misidetext.command.failure.subtitle_requires_entity=无法创建 MiSide 字幕：subtitle=true 要求执行者为实体。
+misidetext.command.failure.options_format=无法创建 MiSide 字幕：options 参数格式无效。
+misidetext.command.failure.option_unknown=无法创建 MiSide 字幕：未知选项 %%1。
+misidetext.command.failure.option_invalid=无法创建 MiSide 字幕：选项 %%1 的值无效。
+misidetext.command.failure.option_conflict=无法创建 MiSide 字幕：选项 %%1 不能与 subtitle=true 同时使用。
+misidetext.command.failure.option_requires_subtitle=无法创建 MiSide 字幕：选项 %%1 仅可在 subtitle=true 时使用。
 misidetext.command.failure.non_negative=无法创建 MiSide 字幕：参数 %%1 的值必须为非负数。
-misidetext.parameter.timings=timings
-misidetext.parameter.render_flags=renderFlags
+misidetext.command.failure.positive=无法创建 MiSide 字幕：参数 %%1 的值必须大于 0。
 misidetext.error.dimension_required=无法创建 MisideText：需要指定维度，或附着到一个实体上。
 misidetext.error.invalid_player=MisideText.setSubtitle 需要有效的玩家对象。
 misidetext.error.visible_to_array=MisideText.visibleTo 必须为 Player 数组。
