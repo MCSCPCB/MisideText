@@ -98,7 +98,10 @@ const LOCALIZATION_KEYS = Object.freeze({
     failureOptionUnknown: "misidetext.command.failure.option_unknown",
     failureOptionInvalid: "misidetext.command.failure.option_invalid",
     failureOptionConflict: "misidetext.command.failure.option_conflict",
+    failureOptionRequiresEntity: "misidetext.command.failure.option_requires_entity",
     failureOptionRequiresSubtitle: "misidetext.command.failure.option_requires_subtitle",
+    failureOptionRequiresUseRotation:
+      "misidetext.command.failure.option_requires_use_rotation",
     failureNonNegative: "misidetext.command.failure.non_negative",
     failurePositive: "misidetext.command.failure.positive"
   }),
@@ -1312,60 +1315,45 @@ function handleMisideTextCommand(origin, ...rawArgs) {
     );
   }
 
-  if (!optionsConfig.subtitle) {
-    const context = resolveCommandSpawnContext(origin, optionsConfig.location);
-    if (!context.dimension) {
-      return createLocalizedCommandResult(
-        origin,
-        CustomCommandStatus.Failure,
-        LOCALIZATION_KEYS.command.failureContext
-      );
-    }
+  const subtitleText = `${text ?? ""}`;
+  const holdDuration = optionsConfig.holdDuration ?? holdConfig.value;
+  const context = optionsConfig.subtitle
+    ? resolveCommandSubtitleSpawnContext(origin, optionsConfig)
+    : resolveCommandSpawnContext(origin, optionsConfig.location);
+  if (!context.dimension) {
+    return createLocalizedCommandResult(
+      origin,
+      CustomCommandStatus.Failure,
+      LOCALIZATION_KEYS.command.failureContext
+    );
   }
 
-  system.run(() => {
-    const subtitleText = `${text ?? ""}`;
-    const holdDuration = optionsConfig.holdDuration ?? holdConfig.value;
-
-    if (optionsConfig.subtitle) {
-      const context = resolveCommandSubtitleSpawnContext(origin, optionsConfig);
-      new MisideText(
-        context.location,
-        subtitleText,
-        {
-          dimension: context.dimension,
-          location: context.location,
-          rotation: context.rotation,
-          basisDirection: context.basisDirection,
-          fadeInDuration: optionsConfig.fadeInDuration,
-          holdDuration,
-          restDuration: optionsConfig.restDuration,
-          fadeOutDuration: optionsConfig.fadeOutDuration,
-          scale: optionsConfig.scale,
-          letterSpacing: optionsConfig.letterSpacing,
-          lineSpacing: optionsConfig.lineSpacing,
-          depthTest: optionsConfig.depthTest,
-          backfaceVisible: optionsConfig.backfaceVisible,
-          glow: optionsConfig.glow
-        }
-      );
-      return;
-    }
-
-    const context = resolveCommandSpawnContext(origin, optionsConfig.location);
-    const rotation = {
+  const attachmentContext = resolveCommandAttachmentContext(origin, optionsConfig, context.location);
+  const rotation = optionsConfig.subtitle
+    ? context.rotation
+    : {
       x: normalizeNumber(optionsConfig.pitch, context.rotation.x),
       y: normalizeNumber(optionsConfig.yaw, context.rotation.y),
       z: normalizeNumber(optionsConfig.roll, context.rotation.z)
     };
 
+  system.run(() => {
+    const attachedTo = attachmentContext.attachedTo?.isValid
+      ? attachmentContext.attachedTo
+      : null;
+    const location = attachedTo
+      ? attachmentContext.location
+      : attachmentContext.fallbackLocation;
+
     new MisideText(
-      context.location,
+      location,
       subtitleText,
       {
-        dimension: context.dimension,
-        location: context.location,
+        dimension: attachedTo?.dimension ?? context.dimension,
+        attachedTo,
         rotation,
+        basisDirection: optionsConfig.subtitle ? context.basisDirection : undefined,
+        useRotation: optionsConfig.useRotation,
         fadeInDuration: optionsConfig.fadeInDuration,
         holdDuration,
         restDuration: optionsConfig.restDuration,
@@ -1391,11 +1379,13 @@ function handleMisideTextCommand(origin, ...rawArgs) {
 function createDefaultCommandOptionsConfig() {
   return {
     subtitle: false,
+    attachTo: null,
     location: null,
     scale: undefined,
     pitch: undefined,
     yaw: undefined,
     roll: undefined,
+    useRotation: undefined,
     letterSpacing: undefined,
     lineSpacing: undefined,
     depthTest: undefined,
@@ -1464,6 +1454,14 @@ function parseCommandOptionsSpec(origin, value) {
         config.subtitle = parsed.value;
         break;
       }
+      case "attachTo": {
+        const parsed = parseCommandAttachToValue(rawValue, key);
+        if (!parsed.ok) {
+          return parsed;
+        }
+        config.attachTo = parsed.value;
+        break;
+      }
       case "location": {
         const parsed = parseCommandLocationValue(origin, rawValue);
         if (!parsed.ok) {
@@ -1515,6 +1513,7 @@ function parseCommandOptionsSpec(origin, value) {
         }
         break;
       }
+      case "useRotation":
       case "depthTest":
       case "backfaceVisible":
       case "glow": {
@@ -1566,6 +1565,26 @@ function parseCommandOptionsSpec(origin, value) {
         return {
           ok: false,
           messageKey: LOCALIZATION_KEYS.command.failureOptionRequiresSubtitle,
+          messageArgs: [key]
+        };
+      }
+    }
+  }
+
+  if (config.attachTo === "executor" && !origin?.sourceEntity?.isValid) {
+    return {
+      ok: false,
+      messageKey: LOCALIZATION_KEYS.command.failureOptionRequiresEntity,
+      messageArgs: ["attachTo"]
+    };
+  }
+
+  if (config.useRotation === false) {
+    for (const key of ["pitch", "yaw", "roll"]) {
+      if (config.specifiedKeys.has(key)) {
+        return {
+          ok: false,
+          messageKey: LOCALIZATION_KEYS.command.failureOptionRequiresUseRotation,
           messageArgs: [key]
         };
       }
@@ -1639,6 +1658,22 @@ function parseCommandBooleanValue(value, label) {
     return {
       ok: true,
       value: false
+    };
+  }
+
+  return {
+    ok: false,
+    messageKey: LOCALIZATION_KEYS.command.failureOptionInvalid,
+    messageArgs: [label]
+  };
+}
+
+function parseCommandAttachToValue(value, label) {
+  const normalized = `${value ?? ""}`.trim().toLowerCase();
+  if (normalized === "executor") {
+    return {
+      ok: true,
+      value: "executor"
     };
   }
 
@@ -1749,6 +1784,26 @@ function resolveCommandSpawnContext(origin, explicitLocation = null) {
     dimension: null,
     location: explicitLocation ? normalizeVec3(explicitLocation) : null,
     rotation: { x: 0, y: 0, z: 0 }
+  };
+}
+
+function resolveCommandAttachmentContext(origin, optionsConfig, absoluteLocation) {
+  const fallbackLocation = normalizeLocation(absoluteLocation);
+  if (optionsConfig.attachTo !== "executor") {
+    return {
+      attachedTo: null,
+      location: fallbackLocation,
+      fallbackLocation
+    };
+  }
+
+  const sourceEntity = origin?.sourceEntity?.isValid ? origin.sourceEntity : null;
+  return {
+    attachedTo: sourceEntity,
+    location: sourceEntity
+      ? subtractVec(fallbackLocation, normalizeLocation(sourceEntity.location))
+      : fallbackLocation,
+    fallbackLocation
   };
 }
 
@@ -3696,6 +3751,14 @@ function addVec(a, b) {
     x: a.x + b.x,
     y: a.y + b.y,
     z: a.z + b.z
+  };
+}
+
+function subtractVec(a, b) {
+  return {
+    x: a.x - b.x,
+    y: a.y - b.y,
+    z: a.z - b.z
   };
 }
 

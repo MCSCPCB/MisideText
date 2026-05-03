@@ -12,6 +12,7 @@
 - 让 `timings` 的完整配置进入 `options`。
 - 支持字间距 `letterSpacing` 与行间距 `lineSpacing`。
 - 支持显式切换到“面向执行者”的字幕模式。
+- 支持 `attachTo=executor` 与 `useRotation=false`。
 
 ## 推荐语法
 
@@ -67,11 +68,13 @@ key=value;key=value;key=value
 | 键名 | 类型 | 中文说明 | 默认值 | 备注 |
 | --- | --- | --- | --- | --- |
 | `subtitle` | `boolean` | 启用字幕模式 | `false` | `true` 时切到字幕模式。 |
+| `attachTo` | `string` | 绑定目标 | 无 | 目前仅支持 `executor`。 |
 | `location` | `vec3` | 位置 | 无 | 仅普通模式可用。 |
 | `scale` | `number` | 缩放 | `1` | 必须大于 `0`。 |
 | `pitch` | `number` | 俯仰角 | `0` | 仅普通模式可用。 |
 | `yaw` | `number` | 偏航角 | `0` | 仅普通模式可用。 |
 | `roll` | `number` | 滚转角 | `0` | 仅普通模式可用。 |
+| `useRotation` | `boolean` | 使用旋转 | `true` | `false` 时改为面向观察者相机。 |
 | `letterSpacing` | `number` | 字间距 | `0.736` | 必须大于或等于 `0`。 |
 | `lineSpacing` | `number` | 行间距 | `0.552` | 必须大于或等于 `0`。 |
 | `depthTest` | `boolean` | 启用深度测试 | `true` | 普通模式与字幕模式都可用。 |
@@ -104,6 +107,8 @@ key=value;key=value;key=value
 
 - 可使用 `location`
 - 可使用 `pitch`、`yaw`、`roll`
+- 可使用 `attachTo=executor`
+- 可使用 `useRotation=false`
 - 如果未提供 `location`
   - 实体执行：在执行者前方生成
   - 命令方块执行：在命令方块上方生成
@@ -118,6 +123,7 @@ key=value;key=value;key=value
 - 锚点位置按“执行者头部位置 + 视线方向 * `distance` - `drop`”计算。
 - 朝向跟随执行者当前朝向。
 - 可使用 `distance` 和 `drop` 调整默认位置。
+- 可使用 `attachTo=executor`，让字幕保持相对位置跟随执行者。
 
 限制：
 
@@ -125,6 +131,7 @@ key=value;key=value;key=value
 - `pitch` 不能与 `subtitle=true` 同时使用
 - `yaw` 不能与 `subtitle=true` 同时使用
 - `roll` 不能与 `subtitle=true` 同时使用
+- `pitch`、`yaw`、`roll` 不能与 `useRotation=false` 同时使用
 
 这样做的目的不是限制功能，而是避免语义冲突：
 
@@ -163,6 +170,12 @@ key=value;key=value;key=value
 /miside:text "你好啊" 2 "letterSpacing=0.8;lineSpacing=0.6;glow=true"
 ```
 
+关闭固定旋转，让字幕面向观察者相机：
+
+```mcfunction
+/miside:text "你好啊" 2 "useRotation=false"
+```
+
 设置完整时序：
 
 ```mcfunction
@@ -199,6 +212,18 @@ key=value;key=value;key=value
 /execute as @p run miside:text "你好啊" 2 "subtitle=true;distance=2.2;drop=0.25"
 ```
 
+绑定到执行者，并保持相对位置跟随：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "attachTo=executor"
+```
+
+字幕模式下绑定到执行者，并面向观察者相机：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "subtitle=true;attachTo=executor;useRotation=false"
+```
+
 ## 失败场景草案
 
 ### 结构错误
@@ -221,10 +246,14 @@ key=value;key=value;key=value
 ### 模式冲突
 
 - `subtitle=true` 时，执行者不是实体
+- `attachTo=executor` 时，执行者不是实体
 - `subtitle=true` 同时写了 `location`
 - `subtitle=true` 同时写了 `pitch`
 - `subtitle=true` 同时写了 `yaw`
 - `subtitle=true` 同时写了 `roll`
+- `useRotation=false` 同时写了 `pitch`
+- `useRotation=false` 同时写了 `yaw`
+- `useRotation=false` 同时写了 `roll`
 
 ## 译名草案
 
@@ -236,11 +265,13 @@ key=value;key=value;key=value
 | `hold` | 停留时长 |
 | `options` | 选项 |
 | `subtitle` | 启用字幕模式 |
+| `attachTo` | 绑定目标 |
 | `location` | 位置 |
 | `scale` | 缩放 |
 | `pitch` | 俯仰角 |
 | `yaw` | 偏航角 |
 | `roll` | 滚转角 |
+| `useRotation` | 使用旋转 |
 | `letterSpacing` | 字间距 |
 | `lineSpacing` | 行间距 |
 | `depthTest` | 启用深度测试 |
@@ -264,7 +295,9 @@ key=value;key=value;key=value
 | `misidetext.command.failure.option_unknown` | `Unable to create MiSide subtitle: unknown option %%1.` | `无法创建 MiSide 字幕：未知选项 %%1。` |
 | `misidetext.command.failure.option_invalid` | `Unable to create MiSide subtitle: option %%1 has an invalid value.` | `无法创建 MiSide 字幕：选项 %%1 的值无效。` |
 | `misidetext.command.failure.option_conflict` | `Unable to create MiSide subtitle: option %%1 cannot be used with subtitle=true.` | `无法创建 MiSide 字幕：选项 %%1 不能与 subtitle=true 同时使用。` |
+| `misidetext.command.failure.option_requires_entity` | `Unable to create MiSide subtitle: option %%1 requires an entity executor.` | `无法创建 MiSide 字幕：选项 %%1 要求执行者为实体。` |
 | `misidetext.command.failure.option_requires_subtitle` | `Unable to create MiSide subtitle: option %%1 requires subtitle=true.` | `无法创建 MiSide 字幕：选项 %%1 仅可在 subtitle=true 时使用。` |
+| `misidetext.command.failure.option_requires_use_rotation` | `Unable to create MiSide subtitle: option %%1 requires useRotation=true.` | `无法创建 MiSide 字幕：选项 %%1 仅可在 useRotation=true 时使用。` |
 | `misidetext.command.failure.non_negative` | `Unable to create MiSide subtitle: parameter %%1 must be a non-negative number.` | `无法创建 MiSide 字幕：参数 %%1 的值必须为非负数。` |
 | `misidetext.command.failure.positive` | `Unable to create MiSide subtitle: parameter %%1 must be greater than 0.` | `无法创建 MiSide 字幕：参数 %%1 的值必须大于 0。` |
 

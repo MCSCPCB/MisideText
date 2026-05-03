@@ -29,11 +29,13 @@ miside:text <text: string> [hold: float] [options: string]
 | Key | Type | Description |
 | --- | --- | --- |
 | `subtitle` | `boolean` | Enables subtitle mode. |
+| `attachTo` | `string` | Attachment target. Currently only `executor` is supported. |
 | `location` | `vec3` | Subtitle position. Only available in normal mode. |
 | `scale` | `number` | Subtitle scale. |
 | `pitch` | `number` | Pitch. Only available in normal mode. |
 | `yaw` | `number` | Yaw. Only available in normal mode. |
 | `roll` | `number` | Roll. Only available in normal mode. |
+| `useRotation` | `boolean` | Uses fixed rotation. When set to `false`, the subtitle faces the viewer camera. |
 | `letterSpacing` | `number` | Horizontal spacing between characters. |
 | `lineSpacing` | `number` | Vertical spacing between lines. |
 | `depthTest` | `boolean` | Enables depth testing. |
@@ -65,6 +67,7 @@ Subtitle mode is enabled with `subtitle=true`.
 - Requires an entity execution context.
 - The subtitle position is calculated from the executor's head position and facing direction.
 - `distance` and `drop` are available.
+- `attachTo=executor` can be used to keep the subtitle following the executor with the same relative offset.
 
 Restrictions:
 
@@ -72,6 +75,7 @@ Restrictions:
 - `pitch` cannot be used when `subtitle=true`.
 - `yaw` cannot be used when `subtitle=true`.
 - `roll` cannot be used when `subtitle=true`.
+- `pitch`, `yaw`, and `roll` cannot be used when `useRotation=false`.
 
 ## Examples
 
@@ -91,6 +95,12 @@ Set character spacing, line spacing, and glow:
 
 ```mcfunction
 /miside:text "Hello" 2 "letterSpacing=0.8;lineSpacing=0.6;glow=true"
+```
+
+Disable fixed rotation so the subtitle faces the viewer camera:
+
+```mcfunction
+/miside:text "Hello" 2 "useRotation=false"
 ```
 
 Set full timing control:
@@ -129,6 +139,18 @@ Use a player context from a command block:
 /execute as @p run miside:text "Hello" 2 "subtitle=true;distance=2.2;drop=0.25"
 ```
 
+Attach the subtitle to the executor and keep the same relative offset:
+
+```mcfunction
+/execute as @p run miside:text "Hello" 2 "attachTo=executor"
+```
+
+Attach in subtitle mode and face the viewer camera:
+
+```mcfunction
+/execute as @p run miside:text "Hello" 2 "subtitle=true;attachTo=executor;useRotation=false"
+```
+
 ## Notes
 
 - `options` is unordered.
@@ -136,6 +158,9 @@ Use a player context from a command block:
 - `location` uses the `x,y,z` format, such as `0,64,0` or `~,~1,~`.
 - `location` does not currently support local `^` coordinates.
 - `distance` and `drop` require `subtitle=true`.
+- `attachTo=executor` requires an entity execution context.
+- `attachTo=executor` preserves the creation-time offset from the executor and follows later movement. It does not recalculate to the executor's current front every tick.
+- `pitch`, `yaw`, and `roll` require `useRotation=true`.
 - `subtitle=true` requires an entity execution context. For command blocks, use `/execute as ... run`.
 - Use `&` instead of `§` for color formatting codes, such as `&c`, `&e`, and `&0`.
 - Use `&&` for a literal `&`.

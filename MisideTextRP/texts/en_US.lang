@@ -6,7 +6,9 @@ misidetext.command.failure.options_format=Unable to create MiSide subtitle: opti
 misidetext.command.failure.option_unknown=Unable to create MiSide subtitle: unknown option %%1.
 misidetext.command.failure.option_invalid=Unable to create MiSide subtitle: option %%1 has an invalid value.
 misidetext.command.failure.option_conflict=Unable to create MiSide subtitle: option %%1 cannot be used with subtitle=true.
+misidetext.command.failure.option_requires_entity=Unable to create MiSide subtitle: option %%1 requires an entity executor.
 misidetext.command.failure.option_requires_subtitle=Unable to create MiSide subtitle: option %%1 requires subtitle=true.
+misidetext.command.failure.option_requires_use_rotation=Unable to create MiSide subtitle: option %%1 requires useRotation=true.
 misidetext.command.failure.non_negative=Unable to create MiSide subtitle: parameter %%1 must be a non-negative number.
 misidetext.command.failure.positive=Unable to create MiSide subtitle: parameter %%1 must be greater than 0.
 misidetext.error.dimension_required=Cannot create MisideText: a dimension or attached entity is required.

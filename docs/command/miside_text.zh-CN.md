@@ -29,11 +29,13 @@ miside:text <text: string> [hold: float] [options: string]
 | 键名 | 类型 | 说明 |
 | --- | --- | --- |
 | `subtitle` | `boolean` | 启用字幕模式。 |
+| `attachTo` | `string` | 绑定目标。目前仅支持 `executor`。 |
 | `location` | `vec3` | 字幕位置。仅普通模式可用。 |
 | `scale` | `number` | 字幕缩放。 |
 | `pitch` | `number` | 俯仰角。仅普通模式可用。 |
 | `yaw` | `number` | 偏航角。仅普通模式可用。 |
 | `roll` | `number` | 滚转角。仅普通模式可用。 |
+| `useRotation` | `boolean` | 使用旋转。设为 `false` 时改为面向玩家相机。 |
 | `letterSpacing` | `number` | 字间距。 |
 | `lineSpacing` | `number` | 行间距。 |
 | `depthTest` | `boolean` | 启用深度测试/禁用方块透视。 |
@@ -65,6 +67,7 @@ miside:text <text: string> [hold: float] [options: string]
 - 执行者必须为实体
 - 位置按执行者头部位置与视线方向计算
 - 可使用 `distance` 和 `drop`
+- 可使用 `attachTo=executor`，让字幕保持相对位置跟随执行者
 
 限制：
 
@@ -72,6 +75,7 @@ miside:text <text: string> [hold: float] [options: string]
 - `pitch` 不能与 `subtitle=true` 同时使用
 - `yaw` 不能与 `subtitle=true` 同时使用
 - `roll` 不能与 `subtitle=true` 同时使用
+- `pitch`、`yaw`、`roll` 不能与 `useRotation=false` 同时使用
 
 ## 示例
 
@@ -91,6 +95,12 @@ miside:text <text: string> [hold: float] [options: string]
 
 ```mcfunction
 /miside:text "你好啊" 2 "letterSpacing=0.8;lineSpacing=0.6;glow=true"
+```
+
+关闭固定旋转，让字幕面向玩家相机：
+
+```mcfunction
+/miside:text "你好啊" 2 "useRotation=false"
 ```
 
 设置完整时序：
@@ -129,6 +139,18 @@ miside:text <text: string> [hold: float] [options: string]
 /execute as @p run miside:text "你好啊" 2 "subtitle=true;distance=2.2;drop=0.25"
 ```
 
+绑定到执行者，并保持相对位置跟随：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "attachTo=executor"
+```
+
+字幕模式下绑定到执行者，并面向玩家相机：
+
+```mcfunction
+/execute as @p run miside:text "你好啊" 2 "subtitle=true;attachTo=executor;useRotation=false"
+```
+
 ## 备注
 
 - `options` 为无序键值对。
@@ -136,6 +158,9 @@ miside:text <text: string> [hold: float] [options: string]
 - `location` 使用 `x,y,z` 格式，例如 `0,64,0` 或 `~,~1,~`。
 - `location` 目前不支持 `^` 局部坐标。
 - `distance` 与 `drop` 仅可在 `subtitle=true` 时使用。
+- `attachTo=executor` 要求执行者为实体。
+- `attachTo=executor` 会保留创建时相对执行者的位置偏移，并在之后跟随执行者移动；它不会每刻重新计算到执行者当前正前方。
+- `pitch`、`yaw` 与 `roll` 仅可在 `useRotation=true` 时使用。
 - `subtitle=true` 要求执行者为实体。命令方块请配合 `/execute as ... run` 使用。
 - 颜色格式代码请使用 `&` 而不是 `§`，例如 `&c`、`&e`、`&0`。
 - 字面量 `&`，请使用 `&&`。

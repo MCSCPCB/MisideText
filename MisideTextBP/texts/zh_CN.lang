@@ -6,7 +6,9 @@ misidetext.command.failure.options_format=无法创建 MiSide 字幕：options �
 misidetext.command.failure.option_unknown=无法创建 MiSide 字幕：未知选项 %%1。
 misidetext.command.failure.option_invalid=无法创建 MiSide 字幕：选项 %%1 的值无效。
 misidetext.command.failure.option_conflict=无法创建 MiSide 字幕：选项 %%1 不能与 subtitle=true 同时使用。
+misidetext.command.failure.option_requires_entity=无法创建 MiSide 字幕：选项 %%1 要求执行者为实体。
 misidetext.command.failure.option_requires_subtitle=无法创建 MiSide 字幕：选项 %%1 仅可在 subtitle=true 时使用。
+misidetext.command.failure.option_requires_use_rotation=无法创建 MiSide 字幕：选项 %%1 仅可在 useRotation=true 时使用。
 misidetext.command.failure.non_negative=无法创建 MiSide 字幕：参数 %%1 的值必须为非负数。
 misidetext.command.failure.positive=无法创建 MiSide 字幕：参数 %%1 的值必须大于 0。
 misidetext.error.dimension_required=无法创建 MisideText：需要指定维度，或附着到一个实体上。
