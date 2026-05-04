@@ -12,11 +12,7 @@
         "EnableAlphaToCoverage"
       ]
     },
-    "miside_subtitle_depth_test_backface:miside_subtitle_depth_test_front": {
-      "+states": [
-        "DisableCulling"
-      ]
-    },
+    "miside_subtitle_depth_test_backface:miside_subtitle_depth_test_front": {},
     "miside_subtitle_depth_off_front:miside_subtitle_depth_test_front": {
       "+states": [
         "DisableDepthTest",
