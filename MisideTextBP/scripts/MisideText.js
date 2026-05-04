@@ -36,7 +36,6 @@ const GLYPH_BATCH_SETUP_SLOT_CHUNK_SIZE = 4;
 const GLYPH_BATCH_DROP_COLLISION_CHUNK_SIZE = 32;
 const GLYPH_ADVANCE = 0.736;
 const GLYPH_DEPTH_BIAS_ADJACENT_STEP = 0.00035;
-const GLYPH_DEPTH_BIAS_MAX_OFFSET = GLYPH_DEPTH_BIAS_ADJACENT_STEP * 3.5;
 const GLYPH_DEPTH_BIAS_MIN_SPACING_EPSILON = 0.000001;
 const FALLBACK_GLYPH_CODE_POINT = 0x003F;
 const SHARD_LINE_SPACING = 0.552;
@@ -1959,13 +1958,15 @@ function resolveGlyphDepthBiasConfig(letterSpacing = GLYPH_ADVANCE) {
     };
   }
 
+  // Keep a fixed adjacent depth step for small spacing. Clamping the total range
+  // collapses long lines back onto the same layer and reintroduces z-fighting.
   const adjacentStep = GLYPH_DEPTH_BIAS_ADJACENT_STEP;
   return {
     slope: normalizedLetterSpacing > GLYPH_DEPTH_BIAS_MIN_SPACING_EPSILON
       ? adjacentStep / normalizedLetterSpacing
       : 0,
     step: adjacentStep,
-    maxOffset: GLYPH_DEPTH_BIAS_MAX_OFFSET
+    maxOffset: 0
   };
 }
 
