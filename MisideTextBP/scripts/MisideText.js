@@ -1958,8 +1958,6 @@ function resolveGlyphDepthBiasConfig(letterSpacing = GLYPH_ADVANCE) {
     };
   }
 
-  // Keep a fixed adjacent depth step for small spacing. Clamping the total range
-  // collapses long lines back onto the same layer and reintroduces z-fighting.
   const adjacentStep = GLYPH_DEPTH_BIAS_ADJACENT_STEP;
   return {
     slope: normalizedLetterSpacing > GLYPH_DEPTH_BIAS_MIN_SPACING_EPSILON
