@@ -1,19 +1,19 @@
 misidetext.command.description=Create a MiSide subtitle.
-misidetext.command.success=Created MiSide subtitle: %%1
+misidetext.command.success=Created MiSide subtitle: %1
 misidetext.command.failure.context=Unable to create MiSide subtitle: this command requires an entity executor or a command block context.
 misidetext.command.failure.subtitle_requires_entity=Unable to create MiSide subtitle: subtitle=true requires an entity executor.
 misidetext.command.failure.options_format=Unable to create MiSide subtitle: options has an invalid format.
-misidetext.command.failure.option_unknown=Unable to create MiSide subtitle: unknown option %%1.
-misidetext.command.failure.option_invalid=Unable to create MiSide subtitle: option %%1 has an invalid value.
-misidetext.command.failure.option_conflict=Unable to create MiSide subtitle: option %%1 cannot be used with subtitle=true.
-misidetext.command.failure.option_requires_entity=Unable to create MiSide subtitle: option %%1 requires an entity executor.
-misidetext.command.failure.option_requires_subtitle=Unable to create MiSide subtitle: option %%1 requires subtitle=true.
-misidetext.command.failure.option_requires_use_rotation=Unable to create MiSide subtitle: option %%1 requires useRotation=true.
-misidetext.command.failure.non_negative=Unable to create MiSide subtitle: parameter %%1 must be a non-negative number.
-misidetext.command.failure.positive=Unable to create MiSide subtitle: parameter %%1 must be greater than 0.
+misidetext.command.failure.option_unknown=Unable to create MiSide subtitle: unknown option %1.
+misidetext.command.failure.option_invalid=Unable to create MiSide subtitle: option %1 has an invalid value.
+misidetext.command.failure.option_conflict=Unable to create MiSide subtitle: option %1 cannot be used with subtitle=true.
+misidetext.command.failure.option_requires_entity=Unable to create MiSide subtitle: option %1 requires an entity executor.
+misidetext.command.failure.option_requires_subtitle=Unable to create MiSide subtitle: option %1 requires subtitle=true.
+misidetext.command.failure.option_requires_use_rotation=Unable to create MiSide subtitle: option %1 requires useRotation=true.
+misidetext.command.failure.non_negative=Unable to create MiSide subtitle: parameter %1 must be a non-negative number.
+misidetext.command.failure.positive=Unable to create MiSide subtitle: parameter %1 must be greater than 0.
 misidetext.gamerule.description=Sets a MiSideText game rule value.
-misidetext.gamerule.success=MiSideText game rule sendCommandFeedback has been updated to %%1
-misidetext.gamerule.failure.rule_unknown=No MiSideText game rule called '%%1' is available
+misidetext.gamerule.success=MiSideText game rule sendCommandFeedback has been updated to %1
+misidetext.gamerule.failure.rule_unknown=No MiSideText game rule called '%1' is available
 misidetext.error.dimension_required=Cannot create MisideText: a dimension or attached entity is required.
 misidetext.error.invalid_player=MisideText.setSubtitle requires a valid player.
 misidetext.error.visible_to_array=MisideText.visibleTo must be a Player array.
@@ -23,4 +23,4 @@ misidetext.error.content_segments_only=MisideTextContent only supports a segment
 misidetext.error.content_segments_array=MisideTextContent.segments must be an array.
 misidetext.error.content_segment_entry=MisideTextContent.segments entries must be objects with a string text property and an optional color object.
 misidetext.error.color_object=MisideTextContent.segments[].color must be an object with red, green, and blue values.
-misidetext.error.color_channel_range=MisideTextContent.segments[].color.%%1 must be an integer between 0 and 255.
+misidetext.error.color_channel_range=MisideTextContent.segments[].color.%1 must be an integer between 0 and 255.
