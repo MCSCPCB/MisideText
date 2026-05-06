@@ -82,6 +82,8 @@ const COLLISION_STAIR_SHAPE_COUNT = 5;
 const SUBTITLE_VISIBLE_PROPERTY = "miside:subtitle_visible";
 const SUBTITLE_VISIBLE_FALSE = 0;
 const SUBTITLE_VISIBLE_TRUE = 1;
+const MISIDE_SEND_COMMAND_FEEDBACK_PROPERTY = "miside:send_command_feedback";
+const DEFAULT_MISIDE_SEND_COMMAND_FEEDBACK = true;
 const SUBTITLE_RUNTIME_TAG_PREFIX = "ms_rt_";
 const SUBTITLE_OWNER_TAG_PREFIX = "ms_tx_";
 const SUBTITLE_BATCH_TAG_PREFIX = "ms_b_";
@@ -103,6 +105,11 @@ const LOCALIZATION_KEYS = Object.freeze({
       "misidetext.command.failure.option_requires_use_rotation",
     failureNonNegative: "misidetext.command.failure.non_negative",
     failurePositive: "misidetext.command.failure.positive"
+  }),
+  gamerule: Object.freeze({
+    description: "misidetext.gamerule.description",
+    success: "misidetext.gamerule.success",
+    failureRuleUnknown: "misidetext.gamerule.failure.rule_unknown"
   }),
   error: Object.freeze({
     dimensionRequired: "misidetext.error.dimension_required",
@@ -158,6 +165,7 @@ const pendingSubtitleEntityIds = new Set();
 let hadOnlinePlayers = false;
 let nextTextId = 1;
 let commandInstalled = false;
+let cachedMisideSendCommandFeedback = undefined;
 let subtitleSweepQueued = false;
 let lastSafePlayersQueryFailed = false;
 
@@ -912,6 +920,17 @@ function installMisideTextCommand() {
         { name: "options", type: CustomCommandParamType.String }
       ]
     }, handleMisideTextCommand);
+
+    commandRegistry.registerCommand({
+      name: "miside:gamerule",
+      description: LOCALIZATION_KEYS.gamerule.description,
+      permissionLevel: CommandPermissionLevel.GameDirectors,
+      cheatsRequired: false,
+      mandatoryParameters: [
+        { name: "rule", type: CustomCommandParamType.String },
+        { name: "value", type: CustomCommandParamType.Boolean }
+      ]
+    }, handleMisideGameruleCommand);
   });
 }
 
@@ -1372,6 +1391,28 @@ function handleMisideTextCommand(origin, ...rawArgs) {
     CustomCommandStatus.Success,
     LOCALIZATION_KEYS.command.success,
     [`${text ?? ""}`]
+  );
+}
+
+function handleMisideGameruleCommand(origin, ...rawArgs) {
+  const args = rawArgs.length === 1 && Array.isArray(rawArgs[0]) ? rawArgs[0] : rawArgs;
+  const [rule, value] = args;
+  const normalizedRule = `${rule ?? ""}`;
+  if (normalizedRule !== "sendCommandFeedback") {
+    return createLocalizedCommandResult(
+      origin,
+      CustomCommandStatus.Failure,
+      LOCALIZATION_KEYS.gamerule.failureRuleUnknown,
+      [normalizedRule]
+    );
+  }
+
+  setMisideSendCommandFeedback(!!value);
+  return createLocalizedCommandResult(
+    origin,
+    CustomCommandStatus.Success,
+    LOCALIZATION_KEYS.gamerule.success,
+    [value ? "true" : "false"]
   );
 }
 
@@ -3815,6 +3856,10 @@ function createLocalizedCommandResult(origin, status, messageKey, messageArgs = 
 }
 
 function sendLocalizedCommandMessage(origin, messageKey, messageArgs = []) {
+  if (!getMisideSendCommandFeedback()) {
+    return false;
+  }
+
   const feedbackTarget = origin?.sourceEntity;
   if (!feedbackTarget?.isValid || typeof feedbackTarget.sendMessage !== "function") {
     return false;
@@ -3871,4 +3916,31 @@ function formatLocalizedErrorMessage(messageKey, messageArgs = []) {
   }
 
   return `${messageKey}:${messageArgs.map((arg) => `${arg ?? ""}`).join(",")}`;
+}
+
+function getMisideSendCommandFeedback() {
+  if (typeof cachedMisideSendCommandFeedback === "boolean") {
+    return cachedMisideSendCommandFeedback;
+  }
+
+  try {
+    const storedValue = world.getDynamicProperty(MISIDE_SEND_COMMAND_FEEDBACK_PROPERTY);
+    cachedMisideSendCommandFeedback =
+      typeof storedValue === "boolean"
+        ? storedValue
+        : DEFAULT_MISIDE_SEND_COMMAND_FEEDBACK;
+  } catch {
+    cachedMisideSendCommandFeedback = DEFAULT_MISIDE_SEND_COMMAND_FEEDBACK;
+  }
+
+  return cachedMisideSendCommandFeedback;
+}
+
+function setMisideSendCommandFeedback(value) {
+  cachedMisideSendCommandFeedback = !!value;
+  world.setDynamicProperty(
+    MISIDE_SEND_COMMAND_FEEDBACK_PROPERTY,
+    cachedMisideSendCommandFeedback
+  );
+  return cachedMisideSendCommandFeedback;
 }

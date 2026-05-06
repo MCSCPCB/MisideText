@@ -11,6 +11,9 @@ misidetext.command.failure.option_requires_subtitle=Unable to create MiSide subt
 misidetext.command.failure.option_requires_use_rotation=Unable to create MiSide subtitle: option %%1 requires useRotation=true.
 misidetext.command.failure.non_negative=Unable to create MiSide subtitle: parameter %%1 must be a non-negative number.
 misidetext.command.failure.positive=Unable to create MiSide subtitle: parameter %%1 must be greater than 0.
+misidetext.gamerule.description=Sets a MiSideText game rule value.
+misidetext.gamerule.success=MiSideText game rule sendCommandFeedback has been updated to %%1
+misidetext.gamerule.failure.rule_unknown=No MiSideText game rule called '%%1' is available
 misidetext.error.dimension_required=Cannot create MisideText: a dimension or attached entity is required.
 misidetext.error.invalid_player=MisideText.setSubtitle requires a valid player.
 misidetext.error.visible_to_array=MisideText.visibleTo must be a Player array.

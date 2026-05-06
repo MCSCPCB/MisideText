@@ -168,3 +168,12 @@ miside:text <text: string> [hold: float] [options: string]
 - 字面量 `/`，请使用 `//`。
 - 只有在脚本启动阶段调用 `MisideTextCommand.register()` 之后，此命令才可用。
 - 该运行时更适合**即时场景字幕**。离开加载区域或重进游戏，原字幕将失效。
+
+## `/miside:gamerule`
+
+```mcfunction
+miside:gamerule sendCommandFeedback <value: bool>
+```
+
+
+是否启用 `miside:` 命令反馈

@@ -168,3 +168,11 @@ Attach in subtitle mode and face the viewer camera:
 - Use `//` for a literal `/`.
 - This command is available only after `MisideTextCommand.register()` is called during script startup.
 - This runtime is better suited to immediate-use subtitle scenes. If the loaded area is left or the game is re-entered, the original subtitle becomes invalid.
+
+## `/miside:gamerule`
+
+```mcfunction
+miside:gamerule sendCommandFeedback <value: bool>
+```
+
+Enable `miside:` command feedback
